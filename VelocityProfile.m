@@ -1,0 +1,217 @@
+%% Set-up
+close all
+clear all
+
+props = java.lang.System.getProperties;
+props.setProperty('mail.smtp.port', '587');
+% props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.starttls.enable','true');
+
+setpref('Internet','E_mail','mprossmatlab@gmail.com');
+setpref('Internet','SMTP_Server','smtp.gmail.com');
+setpref('Internet','SMTP_Username','mprossmatlab');
+setpref('Internet','SMTP_Password','matlab123');
+
+earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
+    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat"];
+timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
+    1218688157 1218965525 1218922324 1219136664 1220284172 1220588360];
+
+vel=[];
+vFreq=[];
+sampF=8;
+t0=cputime;
+
+%% Data pull and decimate
+j=1;
+earthquakes(j)
+filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
+
+rawData=load(filename);
+
+rawBRSX=rawData.rawData(1);
+inBRSX=decimate(rawBRSX.data,rawBRSX.rate/8)*1e-9;
+
+rawBRSY=rawData.rawData(2);
+inBRSY=decimate(rawBRSY.data,rawBRSY.rate/8)*1e-9;
+
+rawSTSX=rawData.rawData(3); 
+inSTSX=decimate(rawSTSX.data,rawSTSX.rate/8)*1e-9;
+
+rawSTSY=rawData.rawData(4); 
+inSTSY=decimate(rawSTSY.data,rawSTSY.rate/8)*1e-9;
+
+rawSTSZ=rawData.rawData(5); 
+inSTSZ=decimate(rawSTSZ.data,rawSTSZ.rate/8)*1e-9;
+
+inBRSX=inBRSX(1:1e5);
+inBRSY=inBRSY(1:1e5);
+inSTSX=inSTSX(1:1e5);
+inSTSY=inSTSY(1:1e5);
+inSTSZ=inSTSZ(1:1e5);
+
+%% Time cut
+timeThreshold=3e-6;
+
+timeCut=find(abs(inSTSZ-mean(inSTSZ))>timeThreshold);
+startTime=(timeCut(1)-1000);
+
+timeCut=find(abs(fliplr(inSTSZ')-mean(inSTSZ))>timeThreshold);
+endTime=(length(inSTSZ)-(timeCut(1)-2000));
+if(startTime<0)
+    startTime=1;
+end
+
+if(endTime>length(inSTSZ))
+    endTime=length(inSTSZ);
+end
+
+%% Inversion and filtering
+
+STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
+STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
+
+time=(startTime:endTime)/sampF;
+
+[b,a]=butter(3,0.01*2/sampF,'high');
+
+BRSX=inBRSX(startTime:endTime);
+BRSY=inBRSY(startTime:endTime);
+
+STSX=lsim(STSInvertFilt,inSTSX(startTime:endTime), time-startTime/sampF);
+STSY=lsim(STSInvertFilt,inSTSY(startTime:endTime), time-startTime/sampF);
+STSZ=lsim(STSInvertFilt,inSTSZ(startTime:endTime), time-startTime/sampF);
+
+STSX=filter(b,a,STSX);
+STSY=filter(b,a,STSY);
+STSZ=filter(b,a,STSZ);
+BRSX=filter(b,a,BRSX);
+BRSY=filter(b,a,BRSY);
+
+%% Spectra
+avg=9;
+[ABRSX, ~] = asd2(BRSX,1/sampF, avg, 1, @hann);
+[ABRSY, ~] = asd2(BRSY,1/sampF, avg, 1, @hann);
+[ASTSX, ~] = asd2(STSX,1/sampF, avg, 1, @hann);
+[ASTSY, ~] = asd2(STSY,1/sampF, avg, 1, @hann);
+[ASTSZ, F] = asd2(STSZ,1/sampF, avg, 1, @hann);
+
+[COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
+[COHX,~]=coh2(BRSX,STSZ,1/sampF, avg, 1, @hann);
+[COHY,F2]=coh2(BRSY,STSZ,1/sampF, avg, 1, @hann);
+
+[T,~]=tfe2(BRSX,BRSY,1/sampF, avg, 1, @hann);
+[TX,~]=tfe2(BRSX,STSZ,1/sampF, avg, 1, @hann);
+[TY,F3]=tfe2(BRSY,STSZ,1/sampF, avg, 1, @hann);
+
+%% Phase Velocity Calculations
+
+thresh=0.6;
+Cin=find(and(movmean(sqrt(COHX.^2+COHY.^2),10)>thresh,F2<0.5));
+cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
+cohF=F(Cin);
+vel=[vel; cohV];
+vFreq=[vFreq; cohF];
+
+obsDispers=movmean(vel,40);
+depth=obsDispers./vFreq;
+
+%% Fit
+bestPar=[];
+bestDispers=[];
+bestErr=1e1000;
+for j=(0:1e5)
+    %Assumes two layers and depth is equal to wavelength
+    %First layer
+    vP1=rand*3e3;
+    r1=rand*1/sqrt(2); %must be between 0 and /srt(2) Landau
+    d1=rand*10e3;
+
+    %Second layer
+    vP2=rand*3e3;
+    r2=randn*1/sqrt(2);
+    d2=rand*10e3;
+    
+    %Third layer
+    vP3=rand*3e3;
+    r3=randn*1/sqrt(2);
+
+    coeffs=[1/vP1^6 0 -8/vP1^4 0 8/vP1^2*(3-2*r1^2) 0 -16*(1-r1^2)];
+    rots=roots(coeffs);
+    fitV1=rots(find(and(and(imag(rots)==0,rots>0),rots<vP1)));
+
+    coeffs=[1/vP2^6 0 -8/vP2^4 0 8/vP2^2*(3-2*r2^2) 0 -16*(1-r2^2)];
+    rots=roots(coeffs);
+    fitV2=rots(find(and(and(imag(rots)==0,rots>0),rots<vP2)));
+    
+    coeffs=[1/vP3^6 0 -8/vP3^4 0 8/vP3^2*(3-2*r2^2) 0 -16*(1-r2^2)];
+    rots=roots(coeffs);
+    fitV3=rots(find(and(and(imag(rots)==0,rots>0),rots<vP3)));
+
+    fitDispers=[];
+    for i=(1:length(vFreq))
+        % Two layers
+%         coeffs=[1 -fitV2 (fitV2-fitV1)*d1*vFreq(i)];
+        % Three layers
+        coeffs=[1 -fitV3 (((fitV2-fitV1)*d1+(fitV3-fitV2)*d2)*vFreq(i))];
+        rots=roots(coeffs);
+        if isempty(max(rots(find(and(rots>0,imag(rots)==0)))))
+            fitDispers=[fitDispers; nan];
+        else
+            fitDispers=[fitDispers; max(rots(find(and(rots>0,imag(rots)==0))))];
+        end
+    end
+    err=sum((fitDispers-obsDispers).^2);
+    if err<bestErr
+        bestDispers=fitDispers;
+        bestErr=err;
+        bestPar=[vP1 r1 d1 vP2 r2 d2 vP3 r3];
+    end
+end
+bestPar    
+
+figure(1)
+plot1=plot(time,BRSY,time,BRSX);
+grid on
+set(plot1,'LineWidth',1.5);
+set(gca,'FontSize',16);
+legend('RX','RY')
+
+figure(2)
+plot1=plot(time,STSX,time,STSY,time,STSZ);
+grid on
+set(plot1,'LineWidth',1.5);
+set(gca,'FontSize',16);
+
+figure(3)
+plot2=loglog(F,ABRSY,F,ABRSX,F,ASTSX,F,ASTSY,F,ASTSZ);
+grid on
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+ylabel('ASD (m/s or rad /\surd{Hz})')
+xlabel('Frequency (Hz)')
+legend('\theta_x','\theta_y','v_x','v_y','v_z')
+
+t=(cputime-t0)/3600
+
+fig1=figure(4);
+plot2=plot(vFreq,vel,'.',vFreq,obsDispers,vFreq,bestDispers);
+ylabel('Velocity (m/s)')
+xlabel('Frequency (Hz)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+
+fig2=figure(5);
+plot2=plot(obsDispers,-depth);
+xlabel('Velocity (m/s)')
+ylabel('Depth (m)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+
+print(fig1,'-dpng','Rayleigh_Dispersion_Linear.png');
+print(fig2,'-dpng','Rayleigh_Dispersion_Log.png');
+% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+%     newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion_Linear.png','Rayleigh_Dispersion_Log.png'});
+

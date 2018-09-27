@@ -22,9 +22,9 @@ vFreq=[];
 sampF=8;
 t0=cputime;
 
-for j=1:length(earthquakes)
+for j=1
     %% Data pull and decimate
-
+   
     earthquakes(j)
     filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -58,7 +58,7 @@ for j=1:length(earthquakes)
     startTime=(timeCut(1)-1000);
 
     timeCut=find(abs(fliplr(inSTSZ')-mean(inSTSZ))>timeThreshold);
-    endTime=(length(inSTSZ)-(timeCut(1)-1000));
+    endTime=(length(inSTSZ)-(timeCut(1)-2000));
     if(startTime<0)
         startTime=1;
     end
@@ -90,7 +90,7 @@ for j=1:length(earthquakes)
     BRSY=filter(b,a,BRSY);
 
     %% Spectra
-    avg=15;
+    avg=9;
     [ABRSX, ~] = asd2(BRSX,1/sampF, avg, 1, @hann);
     [ABRSY, ~] = asd2(BRSY,1/sampF, avg, 1, @hann);
     [ASTSX, ~] = asd2(STSX,1/sampF, avg, 1, @hann);
@@ -107,7 +107,7 @@ for j=1:length(earthquakes)
 
     %% Phase Velocity Calculations
 
-    thresh=0.45;
+    thresh=0.6;
     Cin=find(and(movmean(sqrt(COHX.^2+COHY.^2),10)>thresh,F2<0.5));
     cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
     cohF=F(Cin);
@@ -115,27 +115,28 @@ for j=1:length(earthquakes)
     vFreq=[vFreq; cohF];
 
     %% Plots
-%     figure(1)
-%     plot1=plot(time,BRSY,time,BRSX);
-%     grid on
-%     set(plot1,'LineWidth',1.5);
-%     set(gca,'FontSize',16);
-%     legend('RX','RY')
-% 
-%     figure(2)
-%     plot1=plot(time,STSX,time,STSY,time,STSZ);
-%     grid on
-%     set(plot1,'LineWidth',1.5);
-%     set(gca,'FontSize',16);
-% 
-%     figure(3)
-%     plot2=loglog(F,ABRSY,F,ABRSX,F,ASTSX,F,ASTSY,F,ASTSZ);
-%     grid on
-%     set(plot2,'LineWidth',1.5);
-%     set(gca,'FontSize',16);
-%     ylabel('ASD (m/s or rad /\surd{Hz})')
-%     xlabel('Frequency (Hz)')
-%     legend('\theta_x','\theta_y','v_x','v_y','v_z')
+    figure(1)
+    plot1=plot(time,BRSY,time,BRSX);
+    grid on
+    set(plot1,'LineWidth',1.5);
+    set(gca,'FontSize',16);
+    legend('RX','RY')
+
+    figure(2)
+    plot1=plot(time,STSX,time,STSY,time,STSZ);
+    grid on
+    set(plot1,'LineWidth',1.5);
+    set(gca,'FontSize',16);
+
+    figure(3)
+    plot2=loglog(F,ABRSY,F,ABRSX,F,ASTSX,F,ASTSY,F,ASTSZ);
+    grid on
+    set(plot2,'LineWidth',1.5);
+    set(gca,'FontSize',16);
+    ylabel('ASD (m/s or rad /\surd{Hz})')
+    xlabel('Frequency (Hz)')
+    legend('\theta_x','\theta_y','v_x','v_y','v_z')
+
 end
 
 t=(cputime-t0)/3600
@@ -146,7 +147,7 @@ Vstat=vel(I);
 meanVel=[];
 stdVel=[];
 fVel=[];
-N=5;
+N=10;
 for j=0:length(Vstat)/N-1
     meanVel=[meanVel mean(Vstat(j*N+1:j*N+N))];
     stdVel=[stdVel std(Vstat(j*N+1:j*N+N))];
