@@ -4,7 +4,7 @@ clear all
 
 props = java.lang.System.getProperties;
 props.setProperty('mail.smtp.port', '587');
-% props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.auth','true');
 props.setProperty('mail.smtp.starttls.enable','true');
 
 setpref('Internet','E_mail','mprossmatlab@gmail.com');
@@ -68,8 +68,8 @@ end
 
 %% Inversion and filtering
 
-STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
-STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
+% STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
+% STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
 
 time=(startTime:endTime)/sampF;
 
@@ -81,6 +81,10 @@ BRSY=inBRSY(startTime:endTime);
 STSX=lsim(STSInvertFilt,inSTSX(startTime:endTime), time-startTime/sampF);
 STSY=lsim(STSInvertFilt,inSTSY(startTime:endTime), time-startTime/sampF);
 STSZ=lsim(STSInvertFilt,inSTSZ(startTime:endTime), time-startTime/sampF);
+% 
+% STSX=inSTSX(startTime:endTime);
+% STSY=inSTSY(startTime:endTime);
+% STSZ=inSTSZ(startTime:endTime);
 
 STSX=filter(b,a,STSX);
 STSY=filter(b,a,STSY);
@@ -120,7 +124,7 @@ depth=obsDispers./vFreq;
 bestPar=[];
 bestDispers=[];
 bestErr=1e1000;
-for j=(0:1e5)
+for j=(0:1e3)
     %Assumes two layers and depth is equal to wavelength
     %First layer
     vP1=rand*3e3;
@@ -128,12 +132,12 @@ for j=(0:1e5)
     d1=rand*10e3;
 
     %Second layer
-    vP2=rand*3e3;
+    vP2=rand*(3e3-vP1)+vP1;
     r2=randn*1/sqrt(2);
     d2=rand*10e3;
     
     %Third layer
-    vP3=rand*3e3;
+    vP3=rand*(3e3-vP2)+vP2;
     r3=randn*1/sqrt(2);
 
     coeffs=[1/vP1^6 0 -8/vP1^4 0 8/vP1^2*(3-2*r1^2) 0 -16*(1-r1^2)];
@@ -161,14 +165,15 @@ for j=(0:1e5)
             fitDispers=[fitDispers; max(rots(find(and(rots>0,imag(rots)==0))))];
         end
     end
-    err=sum((fitDispers-obsDispers).^2);
+    err=sum((fitDispers-vel).^2);
     if err<bestErr
         bestDispers=fitDispers;
         bestErr=err;
         bestPar=[vP1 r1 d1 vP2 r2 d2 vP3 r3];
     end
 end
-bestPar    
+%%
+bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
 
 figure(1)
 plot1=plot(time,BRSY,time,BRSX);
@@ -203,15 +208,31 @@ set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
 
 fig2=figure(5);
-plot2=plot(obsDispers,-depth);
+plot2=plot(bestDepth,-(1:5e4)/1e3);
 xlabel('Velocity (m/s)')
-ylabel('Depth (m)')
+ylabel('Depth (km)')
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
+ylim([-40 0])
 
-print(fig1,'-dpng','Rayleigh_Dispersion_Linear.png');
-print(fig2,'-dpng','Rayleigh_Dispersion_Log.png');
-% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-%     newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion_Linear.png','Rayleigh_Dispersion_Log.png'});
+bestDepth=bestDepth/1e3;
+dens=1.6612*bestDepth-0.4721*bestDepth.^2+0.0671*bestDepth.^3-0.0043*bestDepth.^4+0.000106*bestDepth.^5;
+
+fig3=figure(6);
+plot2=plot(dens,-(1:5e4)/1e3,1.3+0*(1:5e4),-(1:5e4)/1e3,2.65+0*(1:5e4),-(1:5e4)/1e3);
+xlabel('Density (g/cm^3)')
+ylabel('Depth (km)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+legend('Measured','Density of silt loam soil','Density of quartz')
+xlim([1 3])
+ylim([-40 0])
+
+print(fig1,'-dpng','Rayleigh_Dispersion.png');
+print(fig2,'-dpng','Velocity_Depth.png');
+print(fig3,'-dpng','Density_Depth.png');
+sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
 
