@@ -104,15 +104,16 @@ avg=9;
 [COHX,~]=coh2(BRSX,STSZ,1/sampF, avg, 1, @hann);
 [COHY,F2]=coh2(BRSY,STSZ,1/sampF, avg, 1, @hann);
 
-[T,~]=tfe2(BRSX,BRSY,1/sampF, avg, 1, @hann);
+[T,~]=tfe2(sqrt(BRSX.^2+BRSY.^2),STSZ,1/sampF, avg, 1, @hann);
 [TX,~]=tfe2(BRSX,STSZ,1/sampF, avg, 1, @hann);
 [TY,F3]=tfe2(BRSY,STSZ,1/sampF, avg, 1, @hann);
 
 %% Phase Velocity Calculations
 
-thresh=0.6;
-Cin=find(and(movmean(sqrt(COHX.^2+COHY.^2),10)>thresh,F2'<0.5));
+thresh=0.8;
+Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2'<0.5));
 cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
+% cohV=abs(real(T(Cin)));
 cohF=F(Cin);
 vel=[vel; cohV];
 vFreq=[vFreq; cohF];
@@ -121,7 +122,7 @@ obsDispers=movmean(vel,40);
 depth=obsDispers./vFreq;
 
 %% Fit
-bestPar=dispersionFit(obsFreq,obsDispers,n);
+[bestPar,bestDispers]=dispersionFit(vFreq,vel,3);
 
 %%
 bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
@@ -151,7 +152,7 @@ legend('\theta_x','\theta_y','v_x','v_y','v_z')
 t=(cputime-t0)/3600
 
 fig1=figure(4);
-plot2=plot(vFreq,vel,'.',vFreq,obsDispers,vFreq,bestDispers);
+plot2=plot(vFreq,vel,'.',vFreq,bestDispers);
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(plot2,'LineWidth',1.5);

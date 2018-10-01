@@ -1,9 +1,9 @@
-function [bestPar]=dispersionFit(obsFreq,obsDispers,n)
+function [bestPar,bestDispers]=dispersionFit(obsFreq,obsDispers,n)
 %% Fit
 bestPar=[];
 bestDispers=[];
 bestErr=1e1000;
-for j=(0:1e3)
+for j=(0:1e7)
     %Assumes two layers and depth is equal to wavelength
     %First layer
     vP1=rand*3e3;
@@ -11,12 +11,12 @@ for j=(0:1e3)
     d1=rand*10e3;
 
     %Second layer
-    vP2=rand*(3e3-vP1)+vP1;
+    vP2=rand*3e3;
     r2=randn*1/sqrt(2);
     d2=rand*10e3;
     
     %Third layer
-    vP3=rand*(3e3-vP2)+vP2;
+    vP3=rand*3e3;
     r3=randn*1/sqrt(2);
 
     coeffs=[1/vP1^6 0 -8/vP1^4 0 8/vP1^2*(3-2*r1^2) 0 -16*(1-r1^2)];
@@ -40,12 +40,18 @@ for j=(0:1e3)
             % Three layers
             coeffs=[1 -fitV3 (((fitV2-fitV1)*d1+(fitV3-fitV2)*d2)*obsFreq(i))];
         else
-            "Invalid layer number."
+            'Invalid layer number.'
             break
         end
-        rots=roots(coeffs);
+        rots=roots(coeffs);        
         if isempty(max(rots(find(and(rots>0,imag(rots)==0)))))
-            fitDispers=[fitDispers; nan];
+            coeffs=[1 -fitV2 (fitV2-fitV1)*d1*obsFreq(i)];
+            rots=roots(coeffs);
+            if isempty(max(rots(find(and(rots>0,imag(rots)==0)))))
+                fitDispers=[fitDispers; nan];
+            else
+                fitDispers=[fitDispers; max(rots(find(and(rots>0,imag(rots)==0))))];
+            end
         else
             fitDispers=[fitDispers; max(rots(find(and(rots>0,imag(rots)==0))))];
         end
