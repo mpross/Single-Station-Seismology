@@ -111,7 +111,7 @@ avg=9;
 %% Phase Velocity Calculations
 
 thresh=0.8;
-Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2'<0.5));
+Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
 cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
 % cohV=abs(real(T(Cin)));
 cohF=F(Cin);
@@ -122,11 +122,13 @@ obsDispers=movmean(vel,40);
 depth=obsDispers./vFreq;
 
 %% Fit
-[bestPar,bestDispers]=dispersionFit(vFreq,vel,3);
-
-%%
-bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
-
+layers=3;
+[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
+if(layers==3)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
+elseif(layers==2)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside((1:5e4)-bestPar(3));
+end
 figure(1)
 plot1=plot(time,BRSY,time,BRSX);
 grid on
