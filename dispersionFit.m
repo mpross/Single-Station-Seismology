@@ -130,6 +130,15 @@ for k=(0:iter)
             vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
             d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
             d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
+        else
+            vP1(n)=vP1(n)+sigma*rand;
+            vP2(n)=vP2(n)+sigma*rand;
+            vP3(n)=vP3(n)+sigma*rand;
+            vS1(n)=vS1(n)+sigma*rand;
+            vS2(n)=vS2(n)+sigma*rand;
+            vS3(n)=vS3(n)+sigma*rand;
+            d1(n)=d1(n)+sigma*rand;
+            d2(n)=d2(n)+sigma*rand;
         end
     end
     
