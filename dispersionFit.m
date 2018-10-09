@@ -1,5 +1,6 @@
 function [bestPar,bestDispers]=dispersionFit(obsFreq,obsDispers,layers)
 %% Fit
+t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
 N=1e3;
@@ -38,22 +39,22 @@ elseif(layers==3)
     vS3=rand([N,1])*3e3;
 end
 figure(15)
-plot1=scatter3(vP1,vS1,err,16,err,'filled')
+plot1=scatter3(vP1,vS1,err,16,err,'filled');
 figure(16)
-plot2=scatter3(vP2,vS2,err,16,err,'filled')
+plot2=scatter3(vP2,vS2,err,16,err,'filled');
 figure(17)
-plot3=scatter3(vP3,vS3,err,16,err,'filled')
+plot3=scatter3(vP3,vS3,err,16,err,'filled');
 figure(18)
-plot4=scatter3(d1,d2,err,16,err,'filled')
+plot4=scatter3(d1,d2,err,16,err,'filled');
 %%
 
-% figure(14)
-% plot2=plot(obsFreq,bestDispers);
-% ylabel('Velocity (m/s)')
-% xlabel('Frequency (Hz)')
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% set(plot2,'MarkerSize',16);
+figure(19)
+plot5=plot(obsFreq,bestDispers);
+ylabel('Velocity (m/s)')
+xlabel('Frequency (Hz)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
 
 for k=(0:iter)
     for n=(1:N)
@@ -124,8 +125,6 @@ for k=(0:iter)
     bestErr=err(bestN);
     bestPar=[vP1(bestN) vS1(bestN) d1(bestN) vP2(bestN) vS2(bestN) d2(bestN) vP3(bestN) vS3(bestN)];
     if mod(k,1)==0
-        set(plot2,'XData',obsFreq)
-        set(plot2,'YData',bestDispers)
         
         set(plot1,'XData',vP1)
         set(plot1,'YData',vS1)
@@ -147,8 +146,13 @@ for k=(0:iter)
         set(plot4,'ZData',err)
         set(plot4,'CData',err)
         
+        set(plot5,'XData',obsFreq)
+        set(plot5,'YData',bestDispers)
+        
         refreshdata
         drawnow
+        disp([num2str(k/iter*100) ' % done'])
+        disp([(iter-k)/k*(cputime-t0) ' s left'])
     end
 end
 if(isempty(bestDispers))
