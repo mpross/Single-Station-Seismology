@@ -1,9 +1,20 @@
 function [bestPar,bestDispers]=dispersionFit(obsFreq,obsDispers,n)
 %% Fit
 bestPar=[];
-bestDispers=[];
+bestDispers=zeros(size(obsDispers));
 bestErr=1e1000;
-for j=(0:1e3)
+
+figure(14)
+plot2=plot(obsFreq,bestDispers);
+ylabel('Velocity (m/s)')
+xlabel('Frequency (Hz)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+h.XDataSource = 'obsFreq';
+h.YDataSource = 'bestDispers';
+    
+for k=(0:1e3)
     %Assumes two layers and depth is equal to wavelength   
     if(n==2)
         %First layer
@@ -80,6 +91,12 @@ for j=(0:1e3)
         bestDispers=fitDispers;
         bestErr=err;
         bestPar=[vP1 vS1 d1 vP2 vS2 d2 vP3 vS3];
+    end
+    if mod(k,10)==0
+        set(plot2,'XData',obsFreq)
+        set(plot2,'YData',bestDispers)
+        refreshdata
+        drawnow
     end
 end
 if(isempty(bestDispers))

@@ -187,6 +187,6 @@ ylim([-40 0])
 print(fig1,'-dpng','Rayleigh_Dispersion.png');
 print(fig2,'-dpng','Velocity_Depth.png');
 print(fig3,'-dpng','Density_Depth.png');
-sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
+% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
 
