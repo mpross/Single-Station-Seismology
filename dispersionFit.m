@@ -111,7 +111,8 @@ for k=(0:iter)
         nDispers(n,:)=fitDispers;
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w=0.5;
+    w1=0.5;
+    w2=0.1;
     sigma=1e1;
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
@@ -119,14 +120,16 @@ for k=(0:iter)
             +(vP3(n)-vP3).^2+(vS3(n)-vS3).^2);
         if not(isempty(find(and(dist>0,err<err(n)))))
             nearestN=min(find(dist==min(dist(find(and(dist>0,err<err(n)))))));
-            vP1(n)=vP1(n)+w*(vP1(nearestN)-vP1(n))+sigma*rand;
-            vP2(n)=vP2(n)+w*(vP2(nearestN)-vP2(n))+sigma*rand;
-            vP3(n)=vP3(n)+w*(vP3(nearestN)-vP3(n))+sigma*rand;
-            vS1(n)=vS1(n)+w*(vS1(nearestN)-vS1(n))+sigma*rand;
-            vS2(n)=vS2(n)+w*(vS2(nearestN)-vS2(n))+sigma*rand;
-            vS3(n)=vS3(n)+w*(vS3(nearestN)-vS3(n))+sigma*rand;
-            d1(n)=d1(n)+w*(d1(nearestN)-d1(n))+sigma*rand;
-            d2(n)=d2(n)+w*(d2(nearestN)-d2(n))+sigma*rand;
+            globalN=min(find(err==min(err)));            
+            
+            vP1(n)=vP1(n)+w1*(vP1(nearestN)-vP1(n))+w2*(vP1(globalN)-vP1(n))+sigma*rand;
+            vP2(n)=vP2(n)+w1*(vP2(nearestN)-vP2(n))+w2*(vP2(globalN)-vP2(n))+sigma*rand;
+            vP3(n)=vP3(n)+w1*(vP3(nearestN)-vP3(n))+w2*(vP3(globalN)-vP3(n))+sigma*rand;
+            vS1(n)=vS1(n)+w1*(vS1(nearestN)-vS1(n))+w2*(vS1(globalN)-vS1(n))+sigma*rand;
+            vS2(n)=vS2(n)+w1*(vS2(nearestN)-vS2(n))+w2*(vS2(globalN)-vS2(n))+sigma*rand;
+            vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
+            d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
+            d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
         end
     end
     
