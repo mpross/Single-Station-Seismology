@@ -1,6 +1,6 @@
 %% Set-up
-close all
-clear all
+% close all
+% clear all
 
 props = java.lang.System.getProperties;
 props.setProperty('mail.smtp.port', '587');
