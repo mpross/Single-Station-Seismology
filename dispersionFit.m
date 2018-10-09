@@ -6,6 +6,7 @@ bestDispers=zeros(size(obsDispers));
 N=1e3;
 iter=1e3;
 nDispers=zeros([N,length(obsFreq)]);
+errSeries=[];
 %%
 err=zeros([N,1]);
 %Assumes two layers and depth is equal to wavelength   
@@ -54,7 +55,15 @@ ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
-set(plot2,'MarkerSize',16);
+set(plot5,'MarkerSize',16);
+
+figure(20)
+plot6=plot(errSeries);
+ylabel('Minimum Error')
+xlabel('Iteration')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot5,'MarkerSize',16);
 
 for k=(0:iter)
     for n=(1:N)
@@ -103,26 +112,27 @@ for k=(0:iter)
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
     w=0.5;
+    sigma=1e1;
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
             +(vP2(n)-vP2).^2+(vS2(n)-vS2).^2+(d2(n)-d2).^2 ...
             +(vP3(n)-vP3).^2+(vS3(n)-vS3).^2);
         if not(isempty(find(and(dist>0,err<err(n)))))
             nearestN=min(find(dist==min(dist(find(and(dist>0,err<err(n)))))));
-            vP1(n)=vP1(n)+w*(vP1(nearestN)-vP1(n));
-            vP2(n)=vP2(n)+w*(vP2(nearestN)-vP2(n));
-            vP3(n)=vP3(n)+w*(vP3(nearestN)-vP3(n));
-            vS1(n)=vS1(n)+w*(vS1(nearestN)-vS1(n));
-            vS2(n)=vS2(n)+w*(vS2(nearestN)-vS2(n));
-            vS3(n)=vS3(n)+w*(vS3(nearestN)-vS3(n));
-            d1(n)=d1(n)+w*(d1(nearestN)-d1(n));
-            d2(n)=d2(n)+w*(d2(nearestN)-d2(n));
+            vP1(n)=vP1(n)+w*(vP1(nearestN)-vP1(n))+sigma*rand;
+            vP2(n)=vP2(n)+w*(vP2(nearestN)-vP2(n))+sigma*rand;
+            vP3(n)=vP3(n)+w*(vP3(nearestN)-vP3(n))+sigma*rand;
+            vS1(n)=vS1(n)+w*(vS1(nearestN)-vS1(n))+sigma*rand;
+            vS2(n)=vS2(n)+w*(vS2(nearestN)-vS2(n))+sigma*rand;
+            vS3(n)=vS3(n)+w*(vS3(nearestN)-vS3(n))+sigma*rand;
+            d1(n)=d1(n)+w*(d1(nearestN)-d1(n))+sigma*rand;
+            d2(n)=d2(n)+w*(d2(nearestN)-d2(n))+sigma*rand;
         end
     end
     
     bestN=min(find(err==min(err)));
     bestDispers=nDispers(bestN,:);
-    bestErr=err(bestN);
+    errSeries=[errSeries; err(bestN)];
     bestPar=[vP1(bestN) vS1(bestN) d1(bestN) vP2(bestN) vS2(bestN) d2(bestN) vP3(bestN) vS3(bestN)];
     if mod(k,1)==0
         
@@ -147,12 +157,23 @@ for k=(0:iter)
         set(plot4,'CData',err)
         
         set(plot5,'XData',obsFreq)
-        set(plot5,'YData',bestDispers)
+        set(plot5,'YData',bestDispers)        
+        
+        if(k==1)
+            figure(20)
+            plot6=plot(errSeries);
+            ylabel('Minimum Error')
+            xlabel('Iteration')
+            set(plot2,'LineWidth',1.5);
+            set(gca,'FontSize',16);
+            set(plot5,'MarkerSize',16);
+        end
+        set(plot6,'YData',errSeries)
         
         refreshdata
         drawnow
         disp([num2str(k/iter*100) ' % done'])
-        disp([(iter-k)/k*(cputime-t0) ' s left'])
+        disp([num2str((iter-k)/k*(cputime-t0)) ' s left'])
     end
 end
 if(isempty(bestDispers))
