@@ -92,8 +92,26 @@ for k=(0:iter)
             end
         end        
         nDispers(n,:)=fitDispers;
-        err(n)=sum((fitDispers-obsDispers).^2);
+        err(n)=sum((fitDispers-obsDispers).^2);        
     end
+    w=0.1;
+    for n=(1:N)
+        dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
+            +(vP2(n)-vP2).^2+(vS2(n)-vS2).^2+(d2(n)-d2).^2 ...
+            +(vP3(n)-vP3).^2+(vS3(n)-vS3).^2);
+        if not(isempty(find(and(dist>0,err<err(n)))))
+            nearestN=find(dist==min(dist(find(and(dist>0,err<err(n))))));
+            vP1(n)=vP1(n)+w(vP1(nearestN)-vP1(n));
+            vP2(n)=vP2(n)+w(vP2(nearestN)-vP2(n));
+            vP3(n)=vP3(n)+w(vP3(nearestN)-vP3(n));
+            vS1(n)=vS1(n)+w(vS1(nearestN)-vS1(n));
+            vS2(n)=vS2(n)+w(vS2(nearestN)-vS2(n));
+            vS3(n)=vS3(n)+w(vS3(nearestN)-vS3(n));
+            d1(n)=d1(n)+w(d1(nearestN)-d1(n));
+            d2(n)=d2(n)+w(d2(nearestN)-d2(n));
+        end
+    end
+    
     bestN=find(err==min(err));
     bestDispers=nDispers(bestN,:);
     bestErr=err(bestN);
