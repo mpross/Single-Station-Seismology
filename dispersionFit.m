@@ -8,61 +8,63 @@ for j=(0:1e3)
     if(n==2)
         %First layer
         vP1=rand*3e3;
-        r1=rand*1/sqrt(2); %must be between 0 and /srt(2) Landau
+        vS1=rand*3e3; %must be between 0 and /srt(2) Landau
         d1=rand*10e3;
 
         %Second layer
         vP2=rand*3e3;
-        r2=randn*1/sqrt(2);
+        vS2=rand*3e3;
         d2=0;
 
         %Third layer
         vP3=0;
-        r3=0;
+        vS3=0;
     elseif(n==3)
         %First layer
         vP1=rand*3e3;
-        r1=rand*1/sqrt(2); %must be between 0 and /srt(2) Landau
+        vS1=rand*3e3; %must be between 0 and /srt(2) Landau
         d1=rand*10e3;
 
         %Second layer
         vP2=rand*3e3;
-        r2=randn*1/sqrt(2);
+        vS2=rand*3e3;
         d2=rand*10e3;
 
         %Third layer
         vP3=rand*3e3;
-        r3=randn*1/sqrt(2);
+        vS3=rand*3e3;
     end
 
-    coeffs=[1/vP1^6 0 -8/vP1^4 0 8/vP1^2*(3-2*r1^2) 0 -16*(1-r1^2)];
+    coeffs=[1/vS1^6 0 -8/vS1^4 0 8/vS1^2*(3-2*vS1^2/vP1^2) 0 -16*(1-vS1^2/vP1^2)];
     rots=roots(coeffs);
     fitV1=rots(find(and(and(imag(rots)==0,rots>0),rots<vP1)));
 
-    coeffs=[1/vP2^6 0 -8/vP2^4 0 8/vP2^2*(3-2*r2^2) 0 -16*(1-r2^2)];
+    coeffs=[1/vS2^6 0 -8/vS2^4 0 8/vS2^2*(3-2*vS2^2/vP2^2) 0 -16*(1-vS2^2/vP2^2)];
     rots=roots(coeffs);
     fitV2=rots(find(and(and(imag(rots)==0,rots>0),rots<vP2)));
     if(n==3)
-        coeffs=[1/vP3^6 0 -8/vP3^4 0 8/vP3^2*(3-2*r2^2) 0 -16*(1-r2^2)];
+        coeffs=[1/vS3^6 0 -8/vS3^4 0 8/vS3^2*(3-2*vS3^2/vP3^2) 0 -16*(1-vS3^2/vP3^2)];
         rots=roots(coeffs);
         fitV3=rots(find(and(and(imag(rots)==0,rots>0),rots<vP3)));
     end
 
     fitDispers=[];
-    for i=(1:length(obsFreq))
+    for j=(1:length(obsFreq))
         if(n==2)
-            % Two layers
-            coeffs=[1 -fitV2 (fitV2-fitV1)*d1*obsFreq(i)];
+            % Two layers square attenuation
+            coeffs=[1 -fitV2 (fitV2-fitV1)*d1*obsFreq(j)];
+            % Two layers linear attenuation
+%             coeffs=[1 -1/2*d1^2*obsFreq(j)^2*(fitV1-fitV2) -obsFreq(j)^3*d1(fitV1-fitV2) obsFreq(j)^4*fitV2/2];
         elseif(n==3)
             % Three layers
-            coeffs=[1 -fitV3 (((fitV2-fitV1)*d1+(fitV3-fitV2)*d2)*obsFreq(i))];
+            coeffs=[1 -fitV3 (((fitV2-fitV1)*d1+(fitV3-fitV2)*d2)*obsFreq(j))];
         else
             'Invalid layer number.'
             break
         end
         rots=roots(coeffs);        
         if isempty(max(rots(find(and(rots>0,imag(rots)==0)))))
-            coeffs=[1 -fitV2 (fitV2-fitV1)*d1*obsFreq(i)];
+            coeffs=[1 -fitV2 (fitV2-fitV1)*d1*obsFreq(j)];
             rots=roots(coeffs);
             if isempty(max(rots(find(and(rots>0,imag(rots)==0)))))
                 fitDispers=[fitDispers; nan];
@@ -77,7 +79,7 @@ for j=(0:1e3)
     if err<bestErr
         bestDispers=fitDispers;
         bestErr=err;
-        bestPar=[vP1 r1 d1 vP2 r2 d2 vP3 r3];
+        bestPar=[vP1 vS1 d1 vP2 vS2 d2 vP3 vS3];
     end
 end
 if(isempty(bestDispers))
