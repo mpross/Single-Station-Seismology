@@ -4,7 +4,7 @@ t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
 N=1e3;
-iter=1e3;
+iter=1e1;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 %%
@@ -40,13 +40,26 @@ elseif(layers==3)
     vS3=rand([N,1])*3e3;
 end
 figure(15)
+subplot(2,2,1)
 plot1=scatter3(vP1,vS1,err,16,err,'filled');
-figure(16)
+ylabel('Layer 1 S-wave Velocity')
+xlabel('Layer 1 P-wave Velocity')
+zlabel('Error')
+subplot(2,2,2)
 plot2=scatter3(vP2,vS2,err,16,err,'filled');
-figure(17)
+ylabel('Layer 2 S-wave Velocity')
+xlabel('Layer 2 P-wave Velocity')
+zlabel('Error')
+subplot(2,2,3)
 plot3=scatter3(vP3,vS3,err,16,err,'filled');
-figure(18)
+ylabel('Layer 3 S-wave Velocity')
+xlabel('Layer 3 S-wave Velocity')
+zlabel('Error')
+subplot(2,2,4)
 plot4=scatter3(d1,d2,err,16,err,'filled');
+ylabel('Layer 1 Thickness')
+xlabel('Layer 2 Thickness')
+zlabel('Error')
 %%
 
 figure(19)
@@ -65,7 +78,7 @@ set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot5,'MarkerSize',16);
 
-for k=(0:iter)
+for k=(1:iter)
     for n=(1:N)
 
         coeffs=[1/vS1(n)^6 0 -8/vS1(n)^4 0 8/vS1(n)^2*(3-2*vS1(n)^2/vP1(n)^2) 0 -16*(1-vS1(n)^2/vP1(n)^2)];
@@ -112,7 +125,7 @@ for k=(0:iter)
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
     w1=0.5;
-    w2=0.1;
+    w2=0.01;
     sigma=1e1;
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
@@ -130,15 +143,15 @@ for k=(0:iter)
             vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
             d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
             d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
-        else
-            vP1(n)=vP1(n)+sigma*rand;
-            vP2(n)=vP2(n)+sigma*rand;
-            vP3(n)=vP3(n)+sigma*rand;
-            vS1(n)=vS1(n)+sigma*rand;
-            vS2(n)=vS2(n)+sigma*rand;
-            vS3(n)=vS3(n)+sigma*rand;
-            d1(n)=d1(n)+sigma*rand;
-            d2(n)=d2(n)+sigma*rand;
+%         else
+%             vP1(n)=vP1(n)+sigma*rand;
+%             vP2(n)=vP2(n)+sigma*rand;
+%             vP3(n)=vP3(n)+sigma*rand;
+%             vS1(n)=vS1(n)+sigma*rand;
+%             vS2(n)=vS2(n)+sigma*rand;
+%             vS3(n)=vS3(n)+sigma*rand;
+%             d1(n)=d1(n)+sigma*rand;
+%             d2(n)=d2(n)+sigma*rand;
         end
     end
     
@@ -169,7 +182,7 @@ for k=(0:iter)
         set(plot4,'CData',err)
         
         set(plot5,'XData',obsFreq)
-        set(plot5,'YData',bestDispers)        
+        set(plot5,'YData',bestDispers)     
         
         if(k==1)
             figure(20)
@@ -184,10 +197,20 @@ for k=(0:iter)
         
         refreshdata
         drawnow
+        
+        figure(15)
+        F(k)=getframe(gcf);
+        
         disp([num2str(k/iter*100) ' % done'])
         disp([num2str((iter-k)/k*(cputime-t0)) ' s left'])
     end
 end
+v = VideoWriter('dispersionSwarm.avi');
+v.FrameRate=2;
+open(v);
+writeVideo(v,F);
+close(v);
+
 if(isempty(bestDispers))
         'Can not find solution'
         bestPar=[0 0 0 0 0 0 0 0];
