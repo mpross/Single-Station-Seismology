@@ -50,22 +50,22 @@ end
 % Create plots
 
 figure(15)
-ax1=subplot(2,2,1)
+ax1=subplot(2,2,1);
 plot1=scatter3(vP1,vS1,err,16,err,'filled');
 ylabel('Layer 1 S-wave Velocity')
 xlabel('Layer 1 P-wave Velocity')
 zlabel('Error')
-ax2=subplot(2,2,2)
+ax2=subplot(2,2,2);
 plot2=scatter3(vP2,vS2,err,16,err,'filled');
 ylabel('Layer 2 S-wave Velocity')
 xlabel('Layer 2 P-wave Velocity')
 zlabel('Error')
-ax3=subplot(2,2,3)
+ax3=subplot(2,2,3);
 plot3=scatter3(vP3,vS3,err,16,err,'filled');
 ylabel('Layer 3 S-wave Velocity')
 xlabel('Layer 3 S-wave Velocity')
 zlabel('Error')
-ax4=subplot(2,2,4)
+ax4=subplot(2,2,4);
 plot4=scatter3(d1,d2,err,16,err,'filled');
 ylabel('Layer 1 Thickness')
 xlabel('Layer 2 Thickness')
@@ -89,11 +89,12 @@ set(plot5,'MarkerSize',16);
 
 %% Main loop
 for k=(1:iter)
-    for n=(1:N)            
-        nDispers(n,:)=dispersionCalc(vP1,vS1,d1,vP2,vS2,d2,vP3,vS3,obsFreq,layers);        
+    for n=(1:N)
+        fitDispers=dispersionCalc(vP1(n),vS1(n),d1(n),vP2(n),vS2(n),d2(n),vP3(n),vS3(n),obsFreq,layers);
+        nDispers(n,:)=fitDispers;        
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w1=0.5;
+    w1=0.05;
     w2=0.05;
     sigma=5e2;
     

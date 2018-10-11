@@ -26,7 +26,7 @@ d2=rand*1e1+setPar(6);
 vP3=rand*1e1+setPar(7);
 vS3=rand*1e1+setPar(8);
 
-testDispers=dispersionCalc(setPar(1),setPar(2),setPar(3),setPar(4),setPar(5),setPar(6),setPar(7),setPar(8),testFreq,3S)
+testDispers=dispersionCalc(setPar(1),setPar(2),setPar(3),setPar(4),setPar(5),setPar(6),setPar(7),setPar(8),testFreq,3);
 
 [bestPar,bestDispers,frames]=dispersionFit(testFreq,testDispers,3);
 
