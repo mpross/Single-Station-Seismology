@@ -3,7 +3,7 @@ function [bestPar,bestDispers]=dispersionFit(obsFreq,obsDispers,layers)
 t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
-N=1e4;
+N=2e3;
 iter=1e2;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
@@ -40,22 +40,22 @@ elseif(layers==3)
     vS3=rand([N,1])*3e3;
 end
 figure(15)
-subplot(2,2,1)
+ax1=subplot(2,2,1)
 plot1=scatter3(vP1,vS1,err,16,err,'filled');
 ylabel('Layer 1 S-wave Velocity')
 xlabel('Layer 1 P-wave Velocity')
 zlabel('Error')
-subplot(2,2,2)
+ax2=subplot(2,2,2)
 plot2=scatter3(vP2,vS2,err,16,err,'filled');
 ylabel('Layer 2 S-wave Velocity')
 xlabel('Layer 2 P-wave Velocity')
 zlabel('Error')
-subplot(2,2,3)
+ax3=subplot(2,2,3)
 plot3=scatter3(vP3,vS3,err,16,err,'filled');
 ylabel('Layer 3 S-wave Velocity')
 xlabel('Layer 3 S-wave Velocity')
 zlabel('Error')
-subplot(2,2,4)
+ax4=subplot(2,2,4)
 plot4=scatter3(d1,d2,err,16,err,'filled');
 ylabel('Layer 1 Thickness')
 xlabel('Layer 2 Thickness')
@@ -126,10 +126,10 @@ for k=(1:iter)
 %         cutDispers=obsDispers(find(not(isnan(fitDispers))));
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w1=0;
-    w2=0.05;
-    sigma=iter/k*10;
-%     
+    w1=1e-7;
+    w2=0.1;
+    sigma=iter/k*100;
+%      
 %     vP1=randomizeNans(vP1);
 %     vS1=randomizeNans(vS1);
 %     d1=randomizeNans(d1);
@@ -140,31 +140,47 @@ for k=(1:iter)
 %     vS3=randomizeNans(vS3);
     
     for n=(1:N)
-        dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
-            +(vP2(n)-vP2).^2+(vS2(n)-vS2).^2+(d2(n)-d2).^2 ...
-            +(vP3(n)-vP3).^2+(vS3(n)-vS3).^2);
-        if not(isempty(find(and(dist>0,err<err(n)))))
-            nearestN=min(find(dist==min(dist(find(and(dist>0,err<err(n)))))));
-            globalN=min(find(err==min(err)));            
-            
-            vP1(n)=vP1(n)+w1*(vP1(nearestN)-vP1(n))+w2*(vP1(globalN)-vP1(n))+sigma*rand;
-            vP2(n)=vP2(n)+w1*(vP2(nearestN)-vP2(n))+w2*(vP2(globalN)-vP2(n))+sigma*rand;
-            vP3(n)=vP3(n)+w1*(vP3(nearestN)-vP3(n))+w2*(vP3(globalN)-vP3(n))+sigma*rand;
-            vS1(n)=vS1(n)+w1*(vS1(nearestN)-vS1(n))+w2*(vS1(globalN)-vS1(n))+sigma*rand;
-            vS2(n)=vS2(n)+w1*(vS2(nearestN)-vS2(n))+w2*(vS2(globalN)-vS2(n))+sigma*rand;
-            vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
-            d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
-            d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
-%         else
-%             vP1(n)=vP1(n)+sigma*rand;
-%             vP2(n)=vP2(n)+sigma*rand;
-%             vP3(n)=vP3(n)+sigma*rand;
-%             vS1(n)=vS1(n)+sigma*rand;
-%             vS2(n)=vS2(n)+sigma*rand;
-%             vS3(n)=vS3(n)+sigma*rand;
-%             d1(n)=d1(n)+sigma*rand;
-%             d2(n)=d2(n)+sigma*rand;
+        dist1=sqrt((vP1(n)-vP1).^2);
+        dist2=sqrt((vS1(n)-vS1).^2);
+        dist3=sqrt((d1(n)-d1).^2);
+        dist4=sqrt((vP2(n)-vP2).^2);
+        dist5=sqrt((vS2(n)-vS2).^2);
+        dist6=sqrt((d2(n)-d2).^2);
+        dist7=sqrt((vP3(n)-vP3).^2);
+        dist8=sqrt((vS3(n)-vS3).^2);
+        globalN=min(find(err==min(err)));
+        if not(isempty(find(and(dist1>0,err<err(n)))))
+            nearestN=min(find(dist1==min(dist1(find(and(dist1>0,err<err(n)))))));            
+            vP1(n)=vP1(n)+w*(err(nearestN)-err(n))/(vP1(nearestN)-vP1(n))+w2*(vP1(globalN)-vP1(n))+sigma*rand;
         end
+        if not(isempty(find(and(dist2>0,err<err(n)))))
+            nearestN=min(find(dist2==min(dist2(find(and(dist2>0,err<err(n)))))));            
+            vS1(n)=vS1(n)+w*(err(nearestN)-err(n))/(vS1(nearestN)-vS1(n))+w2*(vS1(globalN)-vS1(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist3>0,err<err(n)))))
+            nearestN=min(find(dist3==min(dist3(find(and(dist3>0,err<err(n)))))));            
+            d1(n)=d1(n)+w*(err(nearestN)-err(n))/(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist4>0,err<err(n)))))
+            nearestN=min(find(dist4==min(dist4(find(and(dist4>0,err<err(n)))))));            
+            vP2(n)=vP2(n)+w*(err(nearestN)-err(n))/(vP2(nearestN)-vP2(n))+w2*(vP2(globalN)-vP2(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist5>0,err<err(n)))))
+            nearestN=min(find(dist5==min(dist5(find(and(dist5>0,err<err(n)))))));            
+            vS2(n)=vS2(n)+w*(err(nearestN)-err(n))/(vS2(nearestN)-vS2(n))+w2*(vS2(globalN)-vS2(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist6>0,err<err(n)))))
+            nearestN=min(find(dist6==min(dist6(find(and(dist6>0,err<err(n)))))));            
+            d2(n)=d2(n)+w*(err(nearestN)-err(n))/(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist7>0,err<err(n)))))
+            nearestN=min(find(dist7==min(dist7(find(and(dist7>0,err<err(n)))))));            
+            vP3(n)=vP3(n)+w*(err(nearestN)-err(n))/(vP3(nearestN)-vP3(n))+w2*(vP3(globalN)-vP3(n))+sigma*rand;
+        end
+        if not(isempty(find(and(dist8>0,err<err(n)))))
+            nearestN=min(find(dist8==min(dist8(find(and(dist8>0,err<err(n)))))));            
+            vS3(n)=vS3(n)+w*(err(nearestN)-err(n))/(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
+            ends
     end
     
     bestN=min(find(err==min(err)));
@@ -192,6 +208,9 @@ for k=(1:iter)
         set(plot4,'YData',d2)
         set(plot4,'ZData',err)
         set(plot4,'CData',err)
+        
+        figure(15)
+        axis([ax1 ax2 ax3 ax4],[0 5e3 0 5e3 0 1e8])
         
         set(plot5,'XData',obsFreq)
         set(plot5,'YData',bestDispers)     
