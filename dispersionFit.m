@@ -11,7 +11,7 @@ t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
 N=1e3;
-iter=1e2;
+iter=1e4;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
@@ -94,9 +94,9 @@ for k=(1:iter)
         nDispers(n,:)=fitDispers;        
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w1=0.05;
-    w2=0.05;
-    sigma=5e2;
+    w1=0.1;
+    w2=0;
+    sigma=iter/k;
     
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
