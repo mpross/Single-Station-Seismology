@@ -3,8 +3,8 @@ function [bestPar,bestDispers]=dispersionFit(obsFreq,obsDispers,layers)
 t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
-N=1e3;
-iter=1e1;
+N=1e4;
+iter=1e2;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 %%
@@ -14,7 +14,7 @@ if(layers==2)
     %First layer
     vP1=rand([N,1])*3e3;
     vS1=rand([N,1])*3e3; %must be between 0 and /srt(2) Landau
-    d1=rand([N,1])*10e3;
+    d1=rand([N,1])*5e3;
 
     %Second layer
     vP2=rand([N,1])*3e3;
@@ -28,12 +28,12 @@ elseif(layers==3)
     %First layer
     vP1=rand([N,1])*3e3;
     vS1=rand([N,1])*3e3; %must be between 0 and /srt(2) Landau
-    d1=rand([N,1])*10e3;
+    d1=rand([N,1])*5e3;
 
     %Second layer
     vP2=rand([N,1])*3e3;
     vS2=rand([N,1])*3e3;
-    d2=rand([N,1])*10e3;
+    d2=rand([N,1])*5e3;
 
     %Third layer
     vP3=rand([N,1])*3e3;
@@ -71,7 +71,7 @@ set(gca,'FontSize',16);
 set(plot5,'MarkerSize',16);
 
 figure(20)
-plot6=plot(errSeries);
+plot6=semilogy(errSeries);
 ylabel('Minimum Error')
 xlabel('Iteration')
 set(plot2,'LineWidth',1.5);
@@ -122,11 +122,23 @@ for k=(1:iter)
             end
         end        
         nDispers(n,:)=fitDispers;
+%         fitDispers=fitDispers(find(not(isnan(fitDispers))));
+%         cutDispers=obsDispers(find(not(isnan(fitDispers))));
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w1=0.5;
-    w2=0.01;
-    sigma=1e1;
+    w1=0;
+    w2=0.05;
+    sigma=iter/k*10;
+%     
+%     vP1=randomizeNans(vP1);
+%     vS1=randomizeNans(vS1);
+%     d1=randomizeNans(d1);
+%     vP2=randomizeNans(vP2);
+%     vS2=randomizeNans(vS2);
+%     d2=randomizeNans(d2);
+%     vP3=randomizeNans(vP3);
+%     vS3=randomizeNans(vS3);
+    
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
             +(vP2(n)-vP2).^2+(vS2(n)-vS2).^2+(d2(n)-d2).^2 ...
@@ -193,7 +205,9 @@ for k=(1:iter)
             set(gca,'FontSize',16);
             set(plot5,'MarkerSize',16);
         end
-        set(plot6,'YData',errSeries)
+        set(plot6,'YData',errSeries)	
+        figure(20); 
+        set(gca,'YScale','log')
         
         refreshdata
         drawnow
