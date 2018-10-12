@@ -8,7 +8,7 @@ setpref('Internet','SMTP_Server','smtp.gmail.com');
 setpref('Internet','SMTP_Username','mprossmatlab');
 setpref('Internet','SMTP_Password','matlab123');
 
-setPar=[1.5 0.5 1 3 1 2 3.5 2.25]*1e3;
+setPar=[3 2 10 3.5 2.5 20 4 2.25]*1e3;
 t0=cputime;
 testFreq=(5:35)*1e-2;
 

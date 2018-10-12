@@ -10,8 +10,8 @@ function [bestPar,bestDispers,frames]=dispersionFit(obsFreq,obsDispers,layers)
 t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
-N=1e3;
-iter=1e4;
+N=1e4;
+iter=2e1;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
@@ -94,9 +94,9 @@ for k=(1:iter)
         nDispers(n,:)=fitDispers;        
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
-    w1=0.1;
-    w2=0;
-    sigma=iter/k;
+    w1=0.5;
+    w2=0.01;
+    sigma=(iter-k)*10;
     
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
