@@ -10,11 +10,11 @@ setpref('Internet','SMTP_Password','matlab123');
 
 setPar=[3 2 10 3.5 2.5 20 4 2.25]*1e3;
 t0=cputime;
-testFreq=(5:35)*1e-2;
+testFreq=(50:350)*1e-3;
 
 %First layer
 vP1=rand*1e1+setPar(1);
-vS1=rand*1e1+setPar(2); %must be between 0 and /srt(2) Landau
+vS1=rand*1e1+setPar(2); 
 d1=rand*1e1+setPar(3);
 
 %Second layer

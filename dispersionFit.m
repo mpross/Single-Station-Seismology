@@ -10,11 +10,12 @@ function [bestPar,bestDispers,frames]=dispersionFit(obsFreq,obsDispers,layers)
 t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
-N=1e4;
+N=1e3;
 iter=2e1;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
+frames=[];
 
 % Initialize randomly sampled parameter space
 if(layers==2)
@@ -48,7 +49,7 @@ elseif(layers==3)
 end
 
 % Create plots
-% 
+% % % 
 % figure(15)
 % ax1=subplot(2,2,1);
 % plot1=scatter3(vP1,vS1,err,16,err,'filled');
@@ -122,7 +123,7 @@ for k=(1:iter)
     errSeries=[errSeries; err(bestN)];
     bestPar=[vP1(bestN) vS1(bestN) d1(bestN) vP2(bestN) vS2(bestN) d2(bestN) vP3(bestN) vS3(bestN)];
 %     if mod(k,1)==0
-        
+%         
 %         set(plot1,'XData',vP1)
 %         set(plot1,'YData',vS1)
 %         set(plot1,'ZData',err)

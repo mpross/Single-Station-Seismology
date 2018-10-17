@@ -12,7 +12,7 @@ sampF=8;
 
 %% Data pull and decimate
 j=1;
-earthquakes(j)
+earthquakes(j);
 filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j),'.mat');
 
 rawData=load(filename);
@@ -61,7 +61,7 @@ STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
 
 time=(startTime:endTime)/sampF;
 
-[b,a]=butter(3,0.01*2/sampF,'high');
+[b,a]=butter(3,0.02*2/sampF,'high');
 
 BRSX=inBRSX(startTime:endTime);
 BRSY=inBRSY(startTime:endTime);
