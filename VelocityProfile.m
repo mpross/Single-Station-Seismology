@@ -13,9 +13,9 @@ setpref('Internet','SMTP_Username','mprossmatlab');
 setpref('Internet','SMTP_Password','matlab123');
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
-    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9"];
+    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat" "Canada_6_6.mat"];
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
-    1218688157 1218965525 1218922324 1219136664 1220284172 1220588360];
+    1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998];
 
 vel=[];
 vFreq=[];
@@ -23,7 +23,7 @@ sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-j=1;
+j=length(earthquakes);
 earthquakes(j)
 filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j),'.mat');
 

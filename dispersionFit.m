@@ -15,7 +15,7 @@ iter=2e1;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
-frames=[];
+% frames=[];
 
 % Initialize randomly sampled parameter space
 if(layers==2)
@@ -50,47 +50,50 @@ end
 
 % Create plots
 % % % 
-% figure(15)
-% ax1=subplot(2,2,1);
-% plot1=scatter3(vP1,vS1,err,16,err,'filled');
-% ylabel('Layer 1 S-wave Velocity')
-% xlabel('Layer 1 P-wave Velocity')
-% zlabel('Error')
-% ax2=subplot(2,2,2);
-% plot2=scatter3(vP2,vS2,err,16,err,'filled');
-% ylabel('Layer 2 S-wave Velocity')
-% xlabel('Layer 2 P-wave Velocity')
-% zlabel('Error')
-% ax3=subplot(2,2,3);
-% plot3=scatter3(vP3,vS3,err,16,err,'filled');
-% ylabel('Layer 3 S-wave Velocity')
-% xlabel('Layer 3 S-wave Velocity')
-% zlabel('Error')
-% ax4=subplot(2,2,4);
-% plot4=scatter3(d1,d2,err,16,err,'filled');
-% ylabel('Layer 1 Thickness')
-% xlabel('Layer 2 Thickness')
-% zlabel('Error')
-% 
-% figure(19)
-% plot5=plot(obsFreq,bestDispers);
-% ylabel('Velocity (m/s)')
-% xlabel('Frequency (Hz)')
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% set(plot5,'MarkerSize',16);
-% 
-% figure(20)
-% plot6=semilogy(errSeries);
-% ylabel('Minimum Error')
-% xlabel('Iteration')
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% set(plot5,'MarkerSize',16);
+figure(15)
+ax1=subplot(2,2,1);
+plot1=scatter3(vP1,vS1,err,16,err,'filled');
+ylabel('Layer 1 S-wave Velocity')
+xlabel('Layer 1 P-wave Velocity')
+zlabel('Error')
+ax2=subplot(2,2,2);
+plot2=scatter3(vP2,vS2,err,16,err,'filled');
+ylabel('Layer 2 S-wave Velocity')
+xlabel('Layer 2 P-wave Velocity')
+zlabel('Error')
+ax3=subplot(2,2,3);
+plot3=scatter3(vP3,vS3,err,16,err,'filled');
+ylabel('Layer 3 S-wave Velocity')
+xlabel('Layer 3 S-wave Velocity')
+zlabel('Error')
+ax4=subplot(2,2,4);
+plot4=scatter3(d1,d2,err,16,err,'filled');
+ylabel('Layer 1 Thickness')
+xlabel('Layer 2 Thickness')
+zlabel('Error')
+
+figure(19)
+plot5=plot(obsFreq,bestDispers);
+ylabel('Velocity (m/s)')
+xlabel('Frequency (Hz)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot5,'MarkerSize',16);
+
+figure(20)
+plot6=semilogy(errSeries);
+ylabel('Minimum Error')
+xlabel('Iteration')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot5,'MarkerSize',16);
+
+delete(gcp('nocreate'))
+parpool(4)
 
 %% Main loop
 for k=(1:iter)
-    for n=(1:N)
+    parfor n=(1:N)
         fitDispers=dispersionCalc(vP1(n),vS1(n),d1(n),vP2(n),vS2(n),d2(n),vP3(n),vS3(n),obsFreq,layers);
         nDispers(n,:)=fitDispers;        
         err(n)=sum((fitDispers-obsDispers).^2);        
@@ -122,62 +125,62 @@ for k=(1:iter)
     bestDispers=nDispers(bestN,:);
     errSeries=[errSeries; err(bestN)];
     bestPar=[vP1(bestN) vS1(bestN) d1(bestN) vP2(bestN) vS2(bestN) d2(bestN) vP3(bestN) vS3(bestN)];
-%     if mod(k,1)==0
-%         
-%         set(plot1,'XData',vP1)
-%         set(plot1,'YData',vS1)
-%         set(plot1,'ZData',err)
-%         set(plot1,'CData',err)
-%         
-%         set(plot2,'XData',vP2)
-%         set(plot2,'YData',vS2)
-%         set(plot2,'ZData',err)
-%         set(plot2,'CData',err)
-%         
-%         set(plot3,'XData',vP3)
-%         set(plot3,'YData',vS3)
-%         set(plot3,'ZData',err)
-%         set(plot3,'CData',err)
-%         
-%         set(plot4,'XData',d1)
-%         set(plot4,'YData',d2)
-%         set(plot4,'ZData',err)
-%         set(plot4,'CData',err)
-%         
-%         figure(15)
-%         axis([ax1 ax2 ax3 ax4],[0 5e3 0 5e3 0 1e8])
-%         
-%         set(plot5,'XData',obsFreq)
-%         set(plot5,'YData',bestDispers)     
-%         
-%         if(k==1)
-%             figure(20)
-%             plot6=plot(errSeries);
-%             ylabel('Minimum Error')
-%             xlabel('Iteration')
-%             set(plot2,'LineWidth',1.5);
-%             set(gca,'FontSize',16);
-%             set(plot5,'MarkerSize',16);
-%         end
-%         set(plot6,'YData',errSeries)	
-%         figure(20); 
-%         set(gca,'YScale','log')
-%         
-%         refreshdata
-%         drawnow
-%         
-%         figure(15)
-%         frames(k)=getframe(gcf);
-%         
-%         disp([num2str(k/iter*100) ' % done'])
-%         disp([num2str((iter-k)/k*(cputime-t0)) ' s left'])
-%     end
+    if mod(k,1)==0
+        
+        set(plot1,'XData',vP1)
+        set(plot1,'YData',vS1)
+        set(plot1,'ZData',err)
+        set(plot1,'CData',err)
+        
+        set(plot2,'XData',vP2)
+        set(plot2,'YData',vS2)
+        set(plot2,'ZData',err)
+        set(plot2,'CData',err)
+        
+        set(plot3,'XData',vP3)
+        set(plot3,'YData',vS3)
+        set(plot3,'ZData',err)
+        set(plot3,'CData',err)
+        
+        set(plot4,'XData',d1)
+        set(plot4,'YData',d2)
+        set(plot4,'ZData',err)
+        set(plot4,'CData',err)
+        
+        figure(15)
+        axis([ax1 ax2 ax3 ax4],[0 5e3 0 5e3 0 1e8])
+        
+        set(plot5,'XData',obsFreq)
+        set(plot5,'YData',bestDispers)     
+        
+        if(k==1)
+            figure(20)
+            plot6=plot(errSeries);
+            ylabel('Minimum Error')
+            xlabel('Iteration')
+            set(plot2,'LineWidth',1.5);
+            set(gca,'FontSize',16);
+            set(plot5,'MarkerSize',16);
+        end
+        set(plot6,'YData',errSeries)	
+        figure(20); 
+        set(gca,'YScale','log')
+        
+        refreshdata
+        drawnow
+        
+        figure(15)
+        frames(k)=getframe(gcf);
+        
+        disp([num2str(k/iter*100) ' % done'])
+        disp([num2str((iter-k)/k*(cputime-t0)) ' s left'])
+    end
 end
-% v = VideoWriter('dispersionSwarm.avi');
-% v.FrameRate=2;
-% open(v);
-% writeVideo(v,frames);
-% close(v);
+v = VideoWriter('dispersionSwarm.avi');
+v.FrameRate=2;
+open(v);
+writeVideo(v,frames);
+close(v);
 
 if(isempty(bestDispers))
         'Can not find solution'
