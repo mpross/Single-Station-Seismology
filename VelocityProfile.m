@@ -94,11 +94,11 @@ BRSY=filter(b,a,BRSY);
 
 %% Spectra
 avg=9;
-[ABRSX, ~] = asd2(BRSX,1/sampF, avg, 1, @hann);
-[ABRSY, ~] = asd2(BRSY,1/sampF, avg, 1, @hann);
-[ASTSX, ~] = asd2(STSX,1/sampF, avg, 1, @hann);
-[ASTSY, ~] = asd2(STSY,1/sampF, avg, 1, @hann);
-[ASTSZ, F] = asd2(STSZ,1/sampF, avg, 1, @hann);
+[ABRSX, ~] = ampExtraction(BRSX, sampF, avg);
+[ABRSY, ~] = ampExtraction(BRSY, sampF, avg);
+[ASTSX, ~] = ampExtraction(STSX, sampF, avg);
+[ASTSY, ~] = ampExtraction(STSY, sampF, avg);
+[ASTSZ, F] = ampExtraction(STSZ, sampF, avg);
 
 [COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
 [COHX,~]=coh2(BRSX,STSZ,1/sampF, avg, 1, @hann);
