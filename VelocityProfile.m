@@ -25,7 +25,7 @@ t0=cputime;
 %% Data pull and decimate
 j=length(earthquakes);
 earthquakes(j)
-filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j),'.mat');
+filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
 rawData=load(filename);
 

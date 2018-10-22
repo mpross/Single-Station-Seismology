@@ -89,7 +89,7 @@ set(gca,'FontSize',16);
 set(plot5,'MarkerSize',16);
 
 delete(gcp('nocreate'))
-parpool(4)
+parpool
 
 %% Main loop
 for k=(1:iter)
