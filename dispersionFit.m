@@ -11,7 +11,7 @@ t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
 N=1e3;
-iter=2e1;
+iter=1;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
@@ -76,7 +76,7 @@ figure(19)
 plot5=plot(obsFreq,bestDispers);
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
-set(plot2,'LineWidth',1.5);
+set(plot5,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot5,'MarkerSize',16);
 
@@ -84,16 +84,16 @@ figure(20)
 plot6=semilogy(errSeries);
 ylabel('Minimum Error')
 xlabel('Iteration')
-set(plot2,'LineWidth',1.5);
+set(plot6,'LineWidth',1.5);
 set(gca,'FontSize',16);
-set(plot5,'MarkerSize',16);
+set(plot6,'MarkerSize',16);
 
-delete(gcp('nocreate'))
-parpool
+% delete(gcp('nocreate'))
+% parpool
 
 %% Main loop
 for k=(1:iter)
-    parfor n=(1:N)
+    for n=(1:N)
         fitDispers=dispersionCalc(vP1(n),vS1(n),d1(n),vP2(n),vS2(n),d2(n),vP3(n),vS3(n),obsFreq,layers);
         nDispers(n,:)=fitDispers;        
         err(n)=sum((fitDispers-obsDispers).^2);        

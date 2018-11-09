@@ -8,7 +8,7 @@ props.setProperty('mail.smtp.starttls.enable','true');
 setpref('Internet','E_mail','mprossmatlab@gmail.com');
 setpref('Internet','SMTP_Server','smtp.gmail.com');
 setpref('Internet','SMTP_Username','mprossmatlab');
-setpref('Internet','SMTP_Password','matlab123');
+setpref('Internet','SMTP_Password',password);
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
     "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat" "Canada_6_6.mat"];

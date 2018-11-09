@@ -1,4 +1,4 @@
-function [F,A]=ampExtraction(signal,sampF,cuts)
+function [A,F]=ampExtraction(signal,sampF,cuts)
 % Extracts complex amplitudes of signal
 %
 % [F,A]=ampExtraction(signal,sampF)
@@ -20,13 +20,24 @@ end
 
 err1=abs(max(A'));
 err2=abs(min(A'));
-mag=mean(abs(A'));
-
-figure(8)
-hold on
-plot(F,mag);
-fill([F, fliplr(F)], [err1, fliplr(err2)],'b','LineStyle','None');
-alpha(0.1)
-hold off
-set(gca,'YScale','log')
-set(gca,'XScale','log')
+mag=mean(A');
+A=mag;
+% 
+% figure(8)
+% hold on
+% plot(F,abs(mag));
+% fill([F, fliplr(F)], [err1, fliplr(err2)],'b','LineStyle','None');
+% alpha(0.1)
+% hold off
+% set(gca,'YScale','log')
+% set(gca,'XScale','log')
+% 
+% figure(9)
+% X=[real(A);imag(A)]';
+% hist3(X,[200 200],'CdataMode','auto','LineStyle','none')
+% colorbar
+% view(2)
+% 
+% figure(10)
+% histogram(real(A),100)
+% set(gca,'YScale','log')

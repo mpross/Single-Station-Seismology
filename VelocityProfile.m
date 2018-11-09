@@ -10,7 +10,7 @@ props.setProperty('mail.smtp.starttls.enable','true');
 setpref('Internet','E_mail','mprossmatlab@gmail.com');
 setpref('Internet','SMTP_Server','smtp.gmail.com');
 setpref('Internet','SMTP_Username','mprossmatlab');
-setpref('Internet','SMTP_Password','matlab123');
+setpref('Internet','SMTP_Password',password);
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
     "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat" "Canada_6_6.mat"];
@@ -23,7 +23,7 @@ sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-j=length(earthquakes);
+j=1;
 earthquakes(j)
 filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -93,7 +93,7 @@ BRSX=filter(b,a,BRSX);
 BRSY=filter(b,a,BRSY);
 
 %% Spectra
-avg=9;
+avg=15;
 [ABRSX, ~] = ampExtraction(BRSX, sampF, avg);
 [ABRSY, ~] = ampExtraction(BRSY, sampF, avg);
 [ASTSX, ~] = ampExtraction(STSX, sampF, avg);
@@ -101,29 +101,32 @@ avg=9;
 [ASTSZ, F] = ampExtraction(STSZ, sampF, avg);
 
 [COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
-[COHX,~]=coh2(BRSX,STSZ,1/sampF, avg, 1, @hann);
-[COHY,F2]=coh2(BRSY,STSZ,1/sampF, avg, 1, @hann);
+[COHX,~]=coh2(BRSX,STSX,1/sampF, avg, 1, @hann);
+[COHY,F2]=coh2(BRSY,STSY,1/sampF, avg, 1, @hann);
 
 [T,~]=tfe2(sqrt(BRSX.^2+BRSY.^2),STSZ,1/sampF, avg, 1, @hann);
-[TX,~]=tfe2(BRSX,STSZ,1/sampF, avg, 1, @hann);
-[TY,F3]=tfe2(BRSY,STSZ,1/sampF, avg, 1, @hann);
+[TX,~]=tfe2(BRSX,STSX,1/sampF, avg, 1, @hann);
+[TY,F3]=tfe2(BRSY,STSY,1/sampF, avg, 1, @hann);
 
 %% Phase Velocity Calculations
 
 thresh=0.8;
-Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
-cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
+% Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
+Cin=find(and(or(abs(ABRSY)>2e-9,abs(ABRSX)>2e-9),abs(ASTSZ)>2.5e-6));
+% cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
+cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
 % cohV=abs(real(T(Cin)));
+% cohF=F(Cin);
 cohF=F(Cin);
 vel=[vel; cohV];
 vFreq=[vFreq; cohF];
 
 obsDispers=movmean(vel,40);
-depth=obsDispers./vFreq;
+% depth=obsDispers./vFreq;
 
 %% Fit
 layers=3;
-[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
+[bestPar,bestDispers]=dispersionFit(vFreq',vel',layers);
 if(layers==3)
     bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
 elseif(layers==2)
@@ -143,7 +146,7 @@ set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
 
 figure(3)
-plot2=loglog(F,ABRSY,F,ABRSX,F,ASTSX,F,ASTSY,F,ASTSZ);
+plot2=loglog(F,abs(ABRSY),F,abs(ABRSX),F,abs(ASTSX),F,abs(ASTSY),F,abs(ASTSZ));
 grid on
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
@@ -187,6 +190,6 @@ ylim([-40 0])
 print(fig1,'-dpng','Rayleigh_Dispersion.png');
 print(fig2,'-dpng','Velocity_Depth.png');
 print(fig3,'-dpng','Density_Depth.png');
-sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
+% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
 
