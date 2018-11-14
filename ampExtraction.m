@@ -22,22 +22,22 @@ err1=abs(max(A'));
 err2=abs(min(A'));
 mag=mean(A');
 A=mag;
-% 
-% figure(8)
-% hold on
-% plot(F,abs(mag));
-% fill([F, fliplr(F)], [err1, fliplr(err2)],'b','LineStyle','None');
-% alpha(0.1)
-% hold off
-% set(gca,'YScale','log')
-% set(gca,'XScale','log')
-% 
-% figure(9)
-% X=[real(A);imag(A)]';
-% hist3(X,[200 200],'CdataMode','auto','LineStyle','none')
-% colorbar
-% view(2)
-% 
-% figure(10)
-% histogram(real(A),100)
-% set(gca,'YScale','log')
+
+figure(8)
+hold on
+plot(F,abs(mag));
+fill([F, fliplr(F)], [err1, fliplr(err2)],'b','LineStyle','None');
+alpha(0.1)
+hold off
+set(gca,'YScale','log')
+set(gca,'XScale','log')
+
+figure(9)
+X=[real(A);imag(A)]';
+hist3(X,[200 200],'CdataMode','auto','LineStyle','none')
+colorbar
+view(2)
+
+figure(10)
+histogram(real(A),100)
+set(gca,'YScale','log')
