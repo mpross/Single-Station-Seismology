@@ -86,11 +86,11 @@ for j=(1:length(earthquakes))
     BRSY=BRSY(250*sampF:end);
     time=time(250*sampF:end);
     
-    pass=[pass; max(abs(inSTSZ))>=2^15*1e-9];
+    pass=[pass; max(abs(inSTSZ))<=3.333e-4];
 
     figure(1)
-    plot1=plot((1:length(inSTSZ))/8, inSTSZ,(1:length(inSTSZ))/8, (1:length(inSTSZ))*0+2^15*1e-9, 'r',...
-        (1:length(inSTSZ))/8, (1:length(inSTSZ))*0-2^15*1e-9,'r')
+    plot1=plot((1:length(inSTSZ))/8, inSTSZ,(1:length(inSTSZ))/8, (1:length(inSTSZ))*0+3.333e-4, 'r',...
+        (1:length(inSTSZ))/8, (1:length(inSTSZ))*0-3.333e-4,'r')
     set(plot1,'LineWidth',1.5);
     set(gca,'FontSize',16);
     ylabel('Vertical Motion (m/s)')
@@ -123,27 +123,27 @@ for j=(1:length(earthquakes))
     set(fig,'Units','Inches');
     pos = get(fig,'Position');
     set(fig,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/',earthquakes(j),'_ClipCheck.pdf'),'-dpdf','-r1200')
+    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/',earthquakes(j),'_ClipCheck.jpg'), '-djpeg','-r0')
 
 
     fig=figure(2)
     set(fig,'Units','Inches');
     pos = get(fig,'Position');
     set(fig,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_ZSpec.pdf'),'-dpdf','-r1200')
+    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_ZSpec.jpg'), '-djpeg','-r0')
 
 
     fig=figure(3)
     set(fig,'Units','Inches');
     pos = get(fig,'Position');
     set(fig,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_RXSpec.pdf'),'-dpdf','-r1200')
+    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_RXSpec.jpg'), '-djpeg','-r0')
 
 
     fig=figure(4)
     set(fig,'Units','Inches');
     pos = get(fig,'Position');
     set(fig,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
-    print(fig,strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_RYSpec.pdf'),'-dpdf','-r1200')
+    print(fig, strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_RYSpec.jpg'), '-djpeg','-r0')
 end
 pass
