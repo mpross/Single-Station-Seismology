@@ -23,7 +23,8 @@ sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-for j=1:length(earthquakes)
+% for j=1:length(earthquakes)
+for j=1
     earthquakes(j)
     filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -96,11 +97,11 @@ for j=1:length(earthquakes)
 
     %% Spectra
     avg=15;
-    [ABRSX, ~] = ampExtraction(BRSX, sampF, avg);
-    [ABRSY, ~] = ampExtraction(BRSY, sampF, avg);
-    [ASTSX, ~] = ampExtraction(STSX, sampF, avg);
-    [ASTSY, ~] = ampExtraction(STSY, sampF, avg);
-    [ASTSZ, F] = ampExtraction(STSZ, sampF, avg);
+    [ABRSX, ~] = ampExtraction(BRSX, sampF);
+    [ABRSY, ~] = ampExtraction(BRSY, sampF);
+    [ASTSX, ~] = ampExtraction(STSX, sampF);
+    [ASTSY, ~] = ampExtraction(STSY, sampF);
+    [ASTSZ, F] = ampExtraction(STSZ, sampF);
 
     [COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
     [COHX,~]=coh2(BRSX,STSX,1/sampF, avg, 1, @hann);
@@ -113,13 +114,14 @@ for j=1:length(earthquakes)
     %% Phase Velocity Calculations
 
     thresh=0.95;
-    Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
-%     Cin=find(and(or(abs(ABRSY)>2e-9,abs(ABRSX)>2e-9),abs(ASTSZ)>2.5e-6));
+%     Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
+    Cin=find(and(or(abs(ABRSY)>1e-9,abs(ABRSX)>1e-9),abs(ASTSZ)>1e-6));
     % cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
     cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
+%     cohV=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
     % cohV=abs(real(T(Cin)));
-    % cohF=F(Cin);
     cohF=F(Cin);
+%     cohF=F;
     vel=[vel; cohV'];
     vFreq=[vFreq; cohF'];
     
