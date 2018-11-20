@@ -19,12 +19,13 @@ timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
 
 vel=[];
 vFreq=[];
+vErr=[];
 sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-for j=1:length(earthquakes)
-% for j=1
+% for j=1:length(earthquakes)
+for j=1
     earthquakes(j)
     filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -103,11 +104,11 @@ for j=1:length(earthquakes)
 
     %% Spectra
     avg=15;
-    [ABRSX, ~] = ampExtraction(BRSX, sampF);
-    [ABRSY, ~] = ampExtraction(BRSY, sampF);
-    [ASTSX, ~] = ampExtraction(STSX, sampF);
-    [ASTSY, ~] = ampExtraction(STSY, sampF);
-    [ASTSZ, F] = ampExtraction(STSZ, sampF);
+    [ABRSX, EBRSX, ~] = ampExtraction(BRSX, sampF);
+    [ABRSY, EBRSY, ~] = ampExtraction(BRSY, sampF);
+    [ASTSX, ESTSX, ~] = ampExtraction(STSX, sampF);
+    [ASTSY, ESTSY, ~] = ampExtraction(STSY, sampF);
+    [ASTSZ, ESTSZ, F] = ampExtraction(STSZ, sampF);
 
     [COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
     [COHX,~]=coh2(BRSX,STSX,1/sampF, avg, 1, @hann);
@@ -124,12 +125,16 @@ for j=1:length(earthquakes)
 %     Cin=find(and(or(abs(ABRSY)>1e-9,abs(ABRSX)>1e-9),abs(ASTSZ)>1e-6));
     % cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
 %     cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
-    cohV=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
+    v=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
+    errZ=abs(1./sqrt(ABRSY.^2+ABRSX.^2).*ESTSZ);
+    errX= abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSX.*EBRSX);
+    errY=abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSY.*EBRSY);
+    err= sqrt(errZ.^2+errX.^2+errY.^2);
     % cohV=abs(real(T(Cin)));
 %     cohF=F(Cin);
-    cohF=F;
-    vel=[vel; cohV'];
-    vFreq=[vFreq; cohF'];
+    vel=[vel; v'];
+    vFreq=[vFreq; F'];
+    vErr=[vErr; err']
     
     obsDispers=movmean(vel,40);
     % depth=obsDispers./vFreq;
@@ -169,7 +174,7 @@ legend('\theta_x','\theta_y','v_x','v_y','v_z')
 t=(cputime-t0)/3600
 
 fig1=figure(4);
-plot2=plot(vFreq,vel,'.',vFreq,bestDispers);
+plot2=errorbar(vFreq,vel,vErr,'.');
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(plot2,'LineWidth',1.5);

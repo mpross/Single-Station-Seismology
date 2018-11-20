@@ -1,4 +1,4 @@
-function [A,F]=ampExtraction(signal,sampf)
+function [A,err,F]=ampExtraction(signal,sampf)
 % Extracts complex amplitudes of signal
 %
 % [F,A]=ampExtraction(signal,sampF)
@@ -25,7 +25,6 @@ for a=0:iter
     filtSignal=filter(bb,aa,signal);
 
     fitLength=floor(1/(freq/sampf)/4);
-    plot(filtSignal)
     for j=1:floor(length(filtSignal)/fitLength)-2
 
         tim=(j*fitLength:(j+1)*fitLength)'./sampf;
@@ -39,25 +38,25 @@ for a=0:iter
         
     end
     A=[A mean(temp)];
-    err=[err std(err)];
+    err=[err std(temp)/sqrt(length(temp))];
 end
-
-
-figure(8)
-hold on
-plot(F,abs(A));
-fill([F, fliplr(F)], [err, fliplr(err)],'b','LineStyle','None');
-alpha(0.1)
-hold off
-set(gca,'YScale','log')
-set(gca,'XScale','log')
-
-figure(9)
-X=[real(A);imag(A)]';
-hist3(X,[200 200],'CdataMode','auto','LineStyle','none')
-colorbar
-view(2)
-
-figure(10)
-histogram(real(A),100)
-set(gca,'YScale','log')
+% 
+% 
+% figure(8)
+% hold on
+% plot(F,abs(A));
+% fill([F, fliplr(F)], [err, fliplr(err)],'b','LineStyle','None');
+% alpha(0.1)
+% hold off
+% set(gca,'YScale','log')
+% set(gca,'XScale','log')
+% 
+% figure(9)
+% X=[real(A);imag(A)]';
+% hist3(X,[200 200],'CdataMode','auto','LineStyle','none')
+% colorbar
+% view(2)
+% 
+% figure(10)
+% histogram(real(A),100)
+% set(gca,'YScale','log')
