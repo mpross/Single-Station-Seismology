@@ -28,20 +28,13 @@ for a=0:iter
     for j=1:floor(length(filtSignal)/fitLength)-2
 
         tim=(j*fitLength:(j+1)*fitLength)'./sampf;
-        cut=1e9*filtSignal(j*fitLength:(j+1)*fitLength);
-        g = fittype( @(a,b,cen_fr,x) a*sin(2*pi*cen_fr*x)+b*cos(2*pi*cen_fr*x), 'problem', 'cen_fr' );
+        cut=filtSignal(j*fitLength:(j+1)*fitLength);
         
-        fo = fitoptions('Method','NonlinearLeastSquares',...
-               'Lower',[0,0],...
-               'Upper',[Inf,max(tim)],...
-               'StartPoint',[1 1]);
-           
-        [myfit,st] = fit(tim, cut, g, 'problem', freq, fo);
-
-        r2=[r2;st.rsquare];
-        a=abs(coeffvalues(myfit));
+        x=[sin(2*pi*freq*tim), cos(2*pi*freq*tim)];
         
-        A=[A abs(a1(2))+abs(a1(1))*i];
+        w=cut'*x*inv(x'*x);
+        
+        A=[A abs(w(2))+abs(w(1))*i];
         
     end
 end
