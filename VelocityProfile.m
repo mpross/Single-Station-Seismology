@@ -1,6 +1,6 @@
 %% Set-up
-% close all
-% clear all
+close all
+clear all
 
 % props = java.lang.System.getProperties;
 % props.setProperty('mail.smtp.port', '587');
@@ -23,8 +23,8 @@ sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=1
+for j=1:length(earthquakes)
+% for j=1
     earthquakes(j)
     filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -77,8 +77,8 @@ for j=1
 
     [b,a]=butter(3,0.01*2/sampF,'high');
 
-    BRSX=inBRSX(startTime:endTime);
-    BRSY=inBRSY(startTime:endTime);
+    BRSX=inBRSX(startTime:endTime)-mean(inBRSX(startTime:endTime));
+    BRSY=inBRSY(startTime:endTime)-mean(inBRSY(startTime:endTime));
 
     STSX=lsim(STSInvertFilt,inSTSX(startTime:endTime), time-startTime/sampF);
     STSY=lsim(STSInvertFilt,inSTSY(startTime:endTime), time-startTime/sampF);
@@ -94,6 +94,12 @@ for j=1
     BRSX=filter(b,a,BRSX);
     BRSY=filter(b,a,BRSY);
     
+    BRSX=BRSX(500*sampF:end);
+    BRSY=BRSY(500*sampF:end);
+    STSZ=STSZ(500*sampF:end);
+    STSX=STSX(500*sampF:end);
+    STSY=STSY(500*sampF:end);
+    time=time(500*sampF:end);
 
     %% Spectra
     avg=15;
@@ -115,13 +121,13 @@ for j=1
 
     thresh=0.95;
 %     Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
-    Cin=find(and(or(abs(ABRSY)>1e-9,abs(ABRSX)>1e-9),abs(ASTSZ)>1e-6));
+%     Cin=find(and(or(abs(ABRSY)>1e-9,abs(ABRSX)>1e-9),abs(ASTSZ)>1e-6));
     % cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
-    cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
-%     cohV=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
+%     cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
+    cohV=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
     % cohV=abs(real(T(Cin)));
-    cohF=F(Cin);
-%     cohF=F;
+%     cohF=F(Cin);
+    cohF=F;
     vel=[vel; cohV'];
     vFreq=[vFreq; cohF'];
     
