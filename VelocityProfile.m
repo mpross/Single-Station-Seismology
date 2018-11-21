@@ -24,8 +24,8 @@ sampF=8;
 t0=cputime;
 
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=1
+for j=1:length(earthquakes)
+% for j=1
     earthquakes(j)
     filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -110,34 +110,22 @@ for j=1
     [ASTSY, ESTSY, ~] = ampExtraction(STSY, sampF);
     [ASTSZ, ESTSZ, F] = ampExtraction(STSZ, sampF);
 
-    [COH,~]=coh2(BRSX,BRSY,1/sampF, avg, 1, @hann);
-    [COHX,~]=coh2(BRSX,STSX,1/sampF, avg, 1, @hann);
-    [COHY,F2]=coh2(BRSY,STSY,1/sampF, avg, 1, @hann);
-
-    [T,~]=tfe2(sqrt(BRSX.^2+BRSY.^2),STSZ,1/sampF, avg, 1, @hann);
-    [TX,~]=tfe2(BRSX,STSX,1/sampF, avg, 1, @hann);
-    [TY,F3]=tfe2(BRSY,STSY,1/sampF, avg, 1, @hann);
-
     %% Phase Velocity Calculations
 
-    thresh=0.95;
-%     Cin=find(and(sqrt(COHX.^2+COHY.^2)>thresh,F2<0.5));
-%     Cin=find(and(or(abs(ABRSY)>1e-9,abs(ABRSX)>1e-9),abs(ASTSZ)>1e-6));
-    % cohV=ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2);
-%     cohV=abs(ASTSZ(Cin)./sqrt(ABRSY(Cin).^2+ABRSX(Cin).^2));
-    v=abs(ASTSZ./sqrt(ABRSY.^2+ABRSX.^2));
+    in=find(and(or(abs(ABRSY)>1e-10,abs(ABRSX)>1e-10),abs(ASTSZ)>1e-7));
+%     in=find(or(abs(angle(ASTSZ)-angle(ABRSY))<1*pi/180, abs(angle(ASTSZ)-angle(ABRSX))<1*pi/180))
+    v=abs(ASTSZ(in)./sqrt(ABRSY(in).^2+ABRSX(in).^2));
     errZ=abs(1./sqrt(ABRSY.^2+ABRSX.^2).*ESTSZ);
     errX= abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSX.*EBRSX);
     errY=abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSY.*EBRSY);
-    err= sqrt(errZ.^2+errX.^2+errY.^2);
-    % cohV=abs(real(T(Cin)));
-%     cohF=F(Cin);
+    err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
+
+    f=F(in);
     vel=[vel; v'];
-    vFreq=[vFreq; F'];
-    vErr=[vErr; err']
+    vFreq=[vFreq; f'];
+    vErr=[vErr; err'];
     
     obsDispers=movmean(vel,40);
-    % depth=obsDispers./vFreq;
 end
 %% Fit
 
@@ -177,6 +165,7 @@ fig1=figure(4);
 plot2=errorbar(vFreq,vel,vErr,'.');
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
+ylim([0 3000])
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);

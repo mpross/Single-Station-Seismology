@@ -3,9 +3,9 @@ function [A,err,F]=ampExtraction(signal,sampf)
 %
 % [F,A]=ampExtraction(signal,sampF)
 
-startFreq=0.025;
-freqStep=.01;
-endFreq=0.5;
+startFreq=0.01;
+freqStep=.005;
+endFreq=1;
 
 iter=floor((endFreq-startFreq)/freqStep);
 
