@@ -40,8 +40,8 @@ for a=0:iter
     A=[A mean(temp)];
     err=[err std(temp)/sqrt(length(temp))];
 end
-% 
-% 
+
+
 % figure(8)
 % hold on
 % plot(F,abs(A));
