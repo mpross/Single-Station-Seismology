@@ -25,7 +25,7 @@ t0=cputime;
 
 %% Code tests
 % Amplitude fitting test
-    tim=(1:1e5)/sampF;
+    tim=(1:1e4)/sampF;
     testA = 1e-9;
     ampTest=testA*sin(2*pi*0.1*tim);
     [ATest, ETest, F] = ampExtraction(ampTest', sampF);
