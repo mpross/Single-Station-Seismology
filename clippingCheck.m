@@ -10,7 +10,7 @@ vel=[];
 vFreq=[];
 sampF=8;
 
-pass=[];
+clipPass=[];
 
 %% Data pull and decimate
 for j=(1:length(earthquakes))
@@ -86,7 +86,7 @@ for j=(1:length(earthquakes))
     BRSY=BRSY(250*sampF:end);
     time=time(250*sampF:end);
     
-    pass=[pass; max(abs(inSTSZ))<=3.333e-4];
+    clipPass=[clipPass; max(abs(inSTSZ))<=3.333e-4];
 
     figure(1)
     plot1=plot((1:length(inSTSZ))/8, inSTSZ,(1:length(inSTSZ))/8, (1:length(inSTSZ))*0+3.333e-4, 'r',...
@@ -146,4 +146,3 @@ for j=(1:length(earthquakes))
     set(fig,'PaperPositionMode','Auto','PaperUnits','Inches','PaperSize',[pos(3), pos(4)])
     print(fig, strcat('/home/michael/Google Drive/Seismology/EventPlots/', earthquakes(j), '_RYSpec.jpg'), '-djpeg','-r0')
 end
-pass

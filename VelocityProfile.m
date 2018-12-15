@@ -1,6 +1,6 @@
 %% Set-up
 close all
-clear all
+% clear all
 
 % props = java.lang.System.getProperties;
 % props.setProperty('mail.smtp.port', '587');
@@ -11,12 +11,15 @@ clear all
 % setpref('Internet','SMTP_Server','smtp.gmail.com');
 % setpref('Internet','SMTP_Username','mprossmatlab');
 % setpref('Internet','SMTP_Password',password);
+% 
+testBool=false;
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
     "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat" "Canada_6_6.mat" "Iceland_6_8.mat"];
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398];
 
+clipPass=zeros(1, length(earthquakes));
 vel=[];
 vFreq=[];
 vErr=[];
@@ -24,120 +27,134 @@ sampF=8;
 t0=cputime;
 
 %% Code tests
-% Amplitude fitting test
-    tim=(1:1e4)/sampF;
-    testA = 1e-9;
-    ampTest=testA*sin(2*pi*0.1*tim);
-    [ATest, ETest, F] = ampExtraction(ampTest', sampF);
-    
-    if(and(abs(ATest(find(and(F>0.099, F<0.101))))>9e-10,...
-            abs(ATest(find(and(F>0.099, F<0.101))))<1.1e-9))
-        disp('Fitting Test Passed')
-    else
-        disp('Fitting Test Failed')
-        disp(['Amplitude found: ' num2str(abs(ATest(find(and(F>0.099, F<0.101)))))])
-        disp(['Should be: ' num2str(testA)])
-        return
-    end
+if(false)
+    disp(' ')
 
+    % Amplitude fitting test
+        tim=(1:1e4)/sampF;
+        testA = 1e-9;
+        ampTest=testA*sin(2*pi*0.1*tim);
+        [ATest, ETest, F] = ampExtraction(ampTest', sampF);
+
+        if(and(abs(ATest(find(and(F>0.099, F<0.101))))>8.5e-10,...
+                abs(ATest(find(and(F>0.099, F<0.101))))<1.1e-9))
+            disp('Fitting Test Passed')
+        else
+            disp('Fitting Test Failed')
+            disp(['Amplitude found: ' num2str(abs(ATest(find(and(F>0.099, F<0.101)))))])
+            disp(['Should be: ' num2str(testA)])
+            return
+        end
+    % Sensor clipping check
+        clippingCheck
+        disp(['Clipping Check ' num2str(sum(clipPass)) ' out of ' num2str(length(clipPass)) ' passed'])
+
+        disp(' ')
+end
+    
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=1
-    earthquakes(j)
-    filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
+for j=1:length(earthquakes)
+% for j=length(earthquakes)
+    if or(clipPass(j)==1, not(testBool))
+        earthquakes(j)
+        filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
-    rawData=load(filename);
+        rawData=load(filename);
 
-    rawBRSX=rawData.rawData(1);
-    inBRSX=decimate(rawBRSX.data,rawBRSX.rate/8)*1e-9;
+        rawRY=rawData.rawData(1);
+        inRY=decimate(rawRY.data,rawRY.rate/8)*1e-9;
 
-    rawBRSY=rawData.rawData(2);
-    inBRSY=decimate(rawBRSY.data,rawBRSY.rate/8)*1e-9;
+        rawRX=rawData.rawData(2);
+        inRX=decimate(rawRX.data,rawRX.rate/8)*1e-9;
 
-    rawSTSX=rawData.rawData(3); 
-    inSTSX=decimate(rawSTSX.data,rawSTSX.rate/8)*1e-9;
+        rawX=rawData.rawData(3); 
+        inX=decimate(rawX.data,rawX.rate/8)*1e-9;
 
-    rawSTSY=rawData.rawData(4); 
-    inSTSY=decimate(rawSTSY.data,rawSTSY.rate/8)*1e-9;
+        rawY=rawData.rawData(4); 
+        inY=decimate(rawY.data,rawY.rate/8)*1e-9;
 
-    rawSTSZ=rawData.rawData(5); 
-    inSTSZ=decimate(rawSTSZ.data,rawSTSZ.rate/8)*1e-9;
+        rawZ=rawData.rawData(5); 
+        inZ=decimate(rawZ.data,rawZ.rate/8)*1e-9;
 
-    inBRSX=inBRSX(1:1e5);
-    inBRSY=inBRSY(1:1e5);
-    inSTSX=inSTSX(1:1e5);
-    inSTSY=inSTSY(1:1e5);
-    inSTSZ=inSTSZ(1:1e5);
-    
+        inRY=inRY(1:1e5);
+        inRX=inRX(1:1e5);
+        inX=inX(1:1e5);
+        inY=inY(1:1e5);
+        inZ=inZ(1:1e5);
 
-    %% Time cut
-    timeThreshold=3e-6;
 
-    timeCut=find(abs(inSTSZ-mean(inSTSZ))>timeThreshold);
-    startTime=(timeCut(1)-1000);
+        %% Time cut
+        timeThreshold=3e-6;
 
-    timeCut=find(abs(fliplr(inSTSZ')-mean(inSTSZ))>timeThreshold);
-    endTime=(length(inSTSZ)-(timeCut(1)-2000));
-    if(startTime<0)
-        startTime=1;
+        timeCut=find(abs(inZ-mean(inZ))>timeThreshold);
+        startTime=(timeCut(1)-1000);
+
+        timeCut=find(abs(fliplr(inZ')-mean(inZ))>timeThreshold);
+        endTime=(length(inZ)-(timeCut(1)-2000));
+        if(startTime<0)
+            startTime=1;
+        end
+
+        if(endTime>length(inZ))
+            endTime=length(inZ);
+        end
+
+        %% Inversion and filtering
+
+        STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
+        STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
+
+        tim=(startTime:endTime)/sampF;
+
+        [b,a]=butter(3,0.01*2/sampF,'high');
+
+        RY=inRY(startTime:endTime)-mean(inRY(startTime:endTime));
+        RX=inRX(startTime:endTime)-mean(inRX(startTime:endTime));
+
+        X=lsim(STSInvertFilt,inX(startTime:endTime), tim-startTime/sampF);
+        Y=lsim(STSInvertFilt,inY(startTime:endTime), tim-startTime/sampF);
+        Z=lsim(STSInvertFilt,inZ(startTime:endTime), tim-startTime/sampF);
+
+        X=filter(b,a,X);
+        Y=filter(b,a,Y);
+        Z=filter(b,a,Z);
+        RY=filter(b,a,RY);
+        RX=filter(b,a,RX);
+
+        RY=RY(500*sampF:end);
+        RX=RX(500*sampF:end);
+        Z=Z(500*sampF:end);
+        X=X(500*sampF:end);
+        Y=Y(500*sampF:end);
+        tim=tim(500*sampF:end);
+
+        %% Spectra
+        [ARY, ERY, ~, RY_list] = ampExtraction(RY, sampF);
+        [ARX, ERX, ~, RX_list] = ampExtraction(RX, sampF);
+        [AX, EX, ~, X_list] = ampExtraction(X, sampF);
+        [AY, EY, ~, Y_list] = ampExtraction(Y, sampF);
+        [AZ, EZ, F, Z_list] = ampExtraction(Z, sampF);
+
+        %% Phase Velocity Calculations
+
+        in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
+    %     in=find(or(abs(angle(AZ)-angle(ARX))<1*pi/180, abs(angle(AZ)-angle(ARY))<1*pi/180))
+        v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
+        errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
+        errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
+        errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
+        err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
+
+        f=F(in);
+        vel=[vel; v'];
+        vFreq=[vFreq; f'];
+        vErr=[vErr; err'];
+
+        obsDispers=movmean(vel,40);
+    else
+        disp(earthquakes(j))
+        disp('Skipping this event due to clipped sensor.')
     end
-
-    if(endTime>length(inSTSZ))
-        endTime=length(inSTSZ);
-    end
-
-    %% Inversion and filtering
-
-    STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
-    STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
-
-    tim=(startTime:endTime)/sampF;
-
-    [b,a]=butter(3,0.01*2/sampF,'high');
-
-    BRSX=inBRSX(startTime:endTime)-mean(inBRSX(startTime:endTime));
-    BRSY=inBRSY(startTime:endTime)-mean(inBRSY(startTime:endTime));
-
-    STSX=lsim(STSInvertFilt,inSTSX(startTime:endTime), tim-startTime/sampF);
-    STSY=lsim(STSInvertFilt,inSTSY(startTime:endTime), tim-startTime/sampF);
-    STSZ=lsim(STSInvertFilt,inSTSZ(startTime:endTime), tim-startTime/sampF);
-
-    STSX=filter(b,a,STSX);
-    STSY=filter(b,a,STSY);
-    STSZ=filter(b,a,STSZ);
-    BRSX=filter(b,a,BRSX);
-    BRSY=filter(b,a,BRSY);
-    
-    BRSX=BRSX(500*sampF:end);
-    BRSY=BRSY(500*sampF:end);
-    STSZ=STSZ(500*sampF:end);
-    STSX=STSX(500*sampF:end);
-    STSY=STSY(500*sampF:end);
-    tim=tim(500*sampF:end);
-        
-    %% Spectra
-    [ABRSX, EBRSX, ~] = ampExtraction(BRSX, sampF);
-    [ABRSY, EBRSY, ~] = ampExtraction(BRSY, sampF);
-    [ASTSX, ESTSX, ~] = ampExtraction(STSX, sampF);
-    [ASTSY, ESTSY, ~] = ampExtraction(STSY, sampF);
-    [ASTSZ, ESTSZ, F] = ampExtraction(STSZ, sampF);
-
-    %% Phase Velocity Calculations
-
-    in=find(and(or(abs(ABRSY)>1e-12,abs(ABRSX)>1e-12),abs(ASTSZ)>5e-10));
-%     in=find(or(abs(angle(ASTSZ)-angle(ABRSY))<1*pi/180, abs(angle(ASTSZ)-angle(ABRSX))<1*pi/180))
-    v=abs(ASTSZ(in)./sqrt(ABRSY(in).^2+ABRSX(in).^2));
-    errZ=abs(1./sqrt(ABRSY.^2+ABRSX.^2).*ESTSZ);
-    errX= abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSX.*EBRSX);
-    errY=abs(ASTSZ./(ABRSY.^2+ABRSX.^2).^(3/2).*ABRSY.*EBRSY);
-    err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
-
-    f=F(in);
-    vel=[vel; v'];
-    vFreq=[vFreq; f'];
-    vErr=[vErr; err'];
-    
-    obsDispers=movmean(vel,40);
 end
 %% Fit
 
@@ -151,20 +168,20 @@ end
 % end
 
 figure(1)
-plot1=plot(tim,BRSY,tim,BRSX);
+plot1=plot(tim,RX,tim,RY);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
 legend('RX','RY')
 
 figure(2)
-plot1=plot(tim,STSX,tim,STSY,tim,STSZ);
+plot1=plot(tim,X,tim,Y,tim,Z);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
 
 figure(3)
-plot2=loglog(F,abs(ABRSY),F,abs(ABRSX),F,abs(ASTSX),F,abs(ASTSY),F,abs(ASTSZ));
+plot2=loglog(F,abs(ARX),F,abs(ARY),F,abs(AX),F,abs(AY),F,abs(AZ));
 grid on
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
@@ -211,5 +228,5 @@ set(plot2,'MarkerSize',16);
 % print(fig2,'-dpng','Velocity_Depth.png');
 % print(fig3,'-dpng','Density_Depth.png');
 % sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png','Density_Depth.png'});
+%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png'});
 
