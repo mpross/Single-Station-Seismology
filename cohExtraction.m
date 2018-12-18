@@ -1,7 +1,7 @@
-function [A, err, F]=ampExtraction(signal,sampf)
-% Extracts complex amplitudes of signal
+function [C, err, F]=cohExtraction(signal1, signal2, sampf)
+% Extracts coherence between two signals
 %
-% [A, err, F]=ampExtraction(signal,sampF)
+% [C, err, F]=cohExtraction(signal1, signal2, sampf)
 
 startFreq=0.01;
 freqStep=.005;
@@ -41,8 +41,9 @@ for a=0:iter
         end
         
     end
+%     h=histogram(abs(temp), 20);
     
     A=[A mean(temp)];
     err=[err std(temp)/sqrt(length(temp))];
-    
+%     list=[list; h.Values];
 end

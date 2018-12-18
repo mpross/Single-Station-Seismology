@@ -53,8 +53,8 @@ if(false)
 end
     
 %% Data pull and decimate
-for j=1:length(earthquakes)
-% for j=length(earthquakes)
+% for j=1:length(earthquakes)
+for j=length(earthquakes)
     if or(clipPass(j)==1, not(testBool))
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -129,17 +129,18 @@ for j=1:length(earthquakes)
         tim=tim(500*sampF:end);
 
         %% Spectra
-        [ARY, ERY, ~, RY_list] = ampExtraction(RY, sampF);
-        [ARX, ERX, ~, RX_list] = ampExtraction(RX, sampF);
-        [AX, EX, ~, X_list] = ampExtraction(X, sampF);
-        [AY, EY, ~, Y_list] = ampExtraction(Y, sampF);
-        [AZ, EZ, F, Z_list] = ampExtraction(Z, sampF);
+        [ARY, ERY, ~] = ampExtraction(RY, sampF);
+        [ARX, ERX, ~] = ampExtraction(RX, sampF);
+        [AX, EX, ~] = ampExtraction(X, sampF);
+        [AY, EY, ~] = ampExtraction(Y, sampF);
+        [AZ, EZ, F] = ampExtraction(Z, sampF);
 
         %% Phase Velocity Calculations
 
         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
-    %     in=find(or(abs(angle(AZ)-angle(ARX))<1*pi/180, abs(angle(AZ)-angle(ARY))<1*pi/180))
+        
         v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
+        
         errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
         errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
         errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
