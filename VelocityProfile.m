@@ -2,15 +2,17 @@
 close all
 % clear all
 
-% props = java.lang.System.getProperties;
-% props.setProperty('mail.smtp.port', '587');
-% props.setProperty('mail.smtp.auth','true');
-% props.setProperty('mail.smtp.starttls.enable','true');
-% 
-% setpref('Internet','E_mail','mprossmatlab@gmail.com');
-% setpref('Internet','SMTP_Server','smtp.gmail.com');
-% setpref('Internet','SMTP_Username','mprossmatlab');
-% setpref('Internet','SMTP_Password',password);
+parpool(4);
+
+props = java.lang.System.getProperties;
+props.setProperty('mail.smtp.port', '587');
+props.setProperty('mail.smtp.auth','true');
+props.setProperty('mail.smtp.starttls.enable','true');
+
+setpref('Internet','E_mail','mprossmatlab@gmail.com');
+setpref('Internet','SMTP_Server','smtp.gmail.com');
+setpref('Internet','SMTP_Username','mprossmatlab');
+setpref('Internet','SMTP_Password',password);
 % 
 testBool=false;
 
@@ -101,7 +103,7 @@ for j=length(earthquakes)
 
         %% Inversion and filtering
 
-        STSInvertFilt = zpk(-2*pi*[pairQ(8.33e-3,0.707)],-2*pi*[0 0],1);
+        STSInvertFilt = zpk(-2*pi*pairQ(8.33e-3,0.707),-2*pi*[0 0],1);
         STSInvertFilt = 1*STSInvertFilt/abs(freqresp(STSInvertFilt,2*pi*100));
 
         tim=(startTime:endTime)/sampF;
@@ -128,6 +130,9 @@ for j=length(earthquakes)
         Y=Y(500*sampF:end);
         tim=tim(500*sampF:end);
 
+        %% Coherence
+        [C, ERC, ~]=cohExtraction(sqrt(RX.^2+RY.^2), Z, sampF);
+        
         %% Spectra
         [ARY, ERY, ~] = ampExtraction(RY, sampF);
         [ARX, ERX, ~] = ampExtraction(RX, sampF);
@@ -137,7 +142,8 @@ for j=length(earthquakes)
 
         %% Phase Velocity Calculations
 
-        in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
+%         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
+        in=find(C>0.87);
         
         v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
         
@@ -156,7 +162,7 @@ for j=length(earthquakes)
         disp(earthquakes(j))
         disp('Skipping this event due to clipped sensor.')
     end
-end
+% end
 %% Fit
 
 
@@ -190,7 +196,16 @@ ylabel('ASD (m/s or rad /\surd{Hz})')
 xlabel('Frequency (Hz)')
 legend('\theta_x','\theta_y','v_x','v_y','v_z')
 
-% t=(cputime-t0)/3600
+
+figure(5)
+plot2=loglog(F,C);
+grid on
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+ylabel('Coherence')
+xlabel('Frequency (Hz)')
+
+t=(cputime-t0)/3600
 
 fig1=figure(4);
 plot2=errorbar(vFreq,vel,vErr,'.');
@@ -201,6 +216,8 @@ ylim([0 3000])
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
+
+end
 
 % fig2=figure(5);
 % plot2=plot(bestDepth,-(1:5e4)/1e3);
@@ -225,9 +242,10 @@ set(plot2,'MarkerSize',16);
 % xlim([1 3])
 % ylim([-40 0])
 % 
-% print(fig1,'-dpng','Rayleigh_Dispersion.png');
+print(fig1,'-dpng','Rayleigh_Dispersion.png');
 % print(fig2,'-dpng','Velocity_Depth.png');
-% print(fig3,'-dpng','Density_Depth.png');
+% % print(fig3,'-dpng','Density_Depth.png');
 % sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
 %    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png'});
 
+delete(gcp('nocreate'))

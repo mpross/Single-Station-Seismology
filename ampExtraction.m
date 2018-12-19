@@ -14,12 +14,11 @@ F=(startFreq:freqStep:endFreq);
 
 A=[];
 err=[];
-list=[];
 
 for a=0:iter
     
-    temp=[];
-    r2=[];
+    temp=zeros(floor(length(filtSignal)/fitLength)-2,1);
+    
     %% Data Crunching  
     % Bandpass filtering to get data into frequency bins
     freq=(startFreq+a*freqStep);
@@ -28,17 +27,16 @@ for a=0:iter
     filtSignal=filter(bb,aa,signal);
 
     fitLength=floor(1/(freq/sampf)/4);
-    for j=1:floor(length(filtSignal)/fitLength)-2
+    parfor j=1:floor(length(filtSignal)/fitLength)-2
 
         tim=(j*fitLength:(j+1)*fitLength)'./sampf;
         cut=filtSignal(j*fitLength:(j+1)*fitLength);
         
         x=[sin(2*pi*freq*tim), cos(2*pi*freq*tim)];
         
-        w=cut'*x*inv(x'*x);
-        if (sqrt(w(1)^2+w(2)^2) >= max(abs(signal))/100)
-            temp=[temp abs(w(2))+abs(w(1))*i];
-        end
+        w=cut'*x/(x'*x);
+        
+        temp(j)=abs(w(2))+abs(w(1))*1i
         
     end
     

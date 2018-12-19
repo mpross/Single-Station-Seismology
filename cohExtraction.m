@@ -9,41 +9,38 @@ endFreq=1;
 
 iter=floor((endFreq-startFreq)/freqStep);
 
-signal=signal-mean(signal);
+signal1=signal1-mean(signal1);
+signal2=signal2-mean(signal2);
 F=(startFreq:freqStep:endFreq);
 
-A=[];
+C=[];
 err=[];
-list=[];
 
 for a=0:iter
     
-    temp=[];
-    r2=[];
+    temp=zeros(floor(length(filtSignal)/fitLength)-2,1);
+    
     %% Data Crunching  
     % Bandpass filtering to get data into frequency bins
     freq=(startFreq+a*freqStep);
     [bb,aa]= butter(3,[2*((a-1/2)*freqStep+startFreq)/sampf 2*((a+1/2)*freqStep+startFreq)/sampf],'bandpass');
 
-    filtSignal=filter(bb,aa,signal);
+    filtSignal1=filter(bb,aa,signal1);
+    filtSignal2=filter(bb,aa,signal2);
 
-    fitLength=floor(1/(freq/sampf)/4);
-    for j=1:floor(length(filtSignal)/fitLength)-2
+    fitLength=floor(1/(freq/sampf));
+    parfor j=1:floor(length(filtSignal1)/fitLength)-2
 
-        tim=(j*fitLength:(j+1)*fitLength)'./sampf;
-        cut=filtSignal(j*fitLength:(j+1)*fitLength);
+        cut1=filtSignal1(j*fitLength:(j+1)*fitLength);
+        cut2=filtSignal2(j*fitLength:(j+1)*fitLength);
+  
+        crossCor=sqrt(max(abs(xcorr(cut1,cut2))).^2./(max(abs(xcorr(cut1))).*max(abs(xcorr(cut2)))));
         
-        x=[sin(2*pi*freq*tim), cos(2*pi*freq*tim)];
-        
-        w=cut'*x*inv(x'*x);
-        if (sqrt(w(1)^2+w(2)^2) >= max(abs(signal))/100)
-            temp=[temp abs(w(2))+abs(w(1))*i];
-        end
-        
+        temp(j)=crossCor;
+
     end
-%     h=histogram(abs(temp), 20);
-    
-    A=[A mean(temp)];
+        
+    C=[C mean(temp)];
     err=[err std(temp)/sqrt(length(temp))];
-%     list=[list; h.Values];
+    
 end
