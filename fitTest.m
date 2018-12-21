@@ -1,3 +1,4 @@
+
 props = java.lang.System.getProperties;
 props.setProperty('mail.smtp.port', '587');
 props.setProperty('mail.smtp.auth','true');
@@ -6,25 +7,25 @@ props.setProperty('mail.smtp.starttls.enable','true');
 setpref('Internet','E_mail','mprossmatlab@gmail.com');
 setpref('Internet','SMTP_Server','smtp.gmail.com');
 setpref('Internet','SMTP_Username','mprossmatlab');
-setpref('Internet','SMTP_Password','matlab123');
+setpref('Internet','SMTP_Password',password);
 
-setPar=[3 2 10 3.5 2.5 20 4 2.25]*1e3;
+setPar=[1 1/2 1.25 2 2/2 5 4 4/2]*1e3;
 t0=cputime;
 testFreq=(50:350)*1e-3;
 
 %First layer
-vP1=rand*1e1+setPar(1);
-vS1=rand*1e1+setPar(2); 
-d1=rand*1e1+setPar(3);
+vP1=rand*0+setPar(1);
+vS1=rand*0+setPar(2); 
+d1=rand*0+setPar(3);
 
 %Second layer
-vP2=rand*1e1+setPar(4);
-vS2=rand*1e1+setPar(5);
-d2=rand*1e1+setPar(6);
+vP2=rand*0+setPar(4);
+vS2=rand*0+setPar(5);
+d2=rand*0+setPar(6);
 
 %Third layer
-vP3=rand*1e1+setPar(7);
-vS3=rand*1e1+setPar(8);
+vP3=rand*0+setPar(7);
+vS3=rand*0+setPar(8);
 
 testDispers=dispersionCalc(setPar(1),setPar(2),setPar(3),setPar(4),setPar(5),setPar(6),setPar(7),setPar(8),testFreq,3);
 

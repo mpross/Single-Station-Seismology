@@ -11,7 +11,7 @@ t0=cputime;
 bestPar=[];
 bestDispers=zeros(size(obsDispers));
 N=1e3;
-iter=1;
+iter=1e4;
 nDispers=zeros([N,length(obsFreq)]);
 errSeries=[];
 err=zeros([N,1]);
@@ -73,7 +73,10 @@ xlabel('Layer 2 Thickness')
 zlabel('Error')
 
 figure(19)
-plot5=plot(obsFreq,bestDispers);
+plot5=semilogx(obsFreq,bestDispers);
+hold on
+plot7=semilogx(obsFreq,obsDispers);
+hold off
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(plot5,'LineWidth',1.5);
@@ -95,12 +98,14 @@ set(plot6,'MarkerSize',16);
 for k=(1:iter)
     for n=(1:N)
         fitDispers=dispersionCalc(vP1(n),vS1(n),d1(n),vP2(n),vS2(n),d2(n),vP3(n),vS3(n),obsFreq,layers);
-        nDispers(n,:)=fitDispers;        
+        nDispers(n,:)=fitDispers;
+        
+        fitDispers(isnan(fitDispers))=0;
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
     w1=0.5;
-    w2=0.01;
-    sigma=(iter-k)*10;
+    w2=0.1;
+    sigma=(iter-k)*1;
     
     for n=(1:N)
         dist=sqrt((vP1(n)-vP1).^2+(vS1(n)-vS1).^2+(d1(n)-d1).^2 ...
@@ -110,14 +115,14 @@ for k=(1:iter)
             nearestN=min(find(dist==min(dist(find(and(dist>0,err<err(n)))))));
             globalN=min(find(err==min(err)));            
 
-            vP1(n)=vP1(n)+w1*(vP1(nearestN)-vP1(n))+w2*(vP1(globalN)-vP1(n))+sigma*rand;
-            vP2(n)=vP2(n)+w1*(vP2(nearestN)-vP2(n))+w2*(vP2(globalN)-vP2(n))+sigma*rand;
-            vP3(n)=vP3(n)+w1*(vP3(nearestN)-vP3(n))+w2*(vP3(globalN)-vP3(n))+sigma*rand;
-            vS1(n)=vS1(n)+w1*(vS1(nearestN)-vS1(n))+w2*(vS1(globalN)-vS1(n))+sigma*rand;
-            vS2(n)=vS2(n)+w1*(vS2(nearestN)-vS2(n))+w2*(vS2(globalN)-vS2(n))+sigma*rand;
-            vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*rand;
-            d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*rand;
-            d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*rand;
+            vP1(n)=vP1(n)+w1*(vP1(nearestN)-vP1(n))+w2*(vP1(globalN)-vP1(n))+sigma*(rand-0.5);
+            vP2(n)=vP2(n)+w1*(vP2(nearestN)-vP2(n))+w2*(vP2(globalN)-vP2(n))+sigma*(rand-0.5);
+            vP3(n)=vP3(n)+w1*(vP3(nearestN)-vP3(n))+w2*(vP3(globalN)-vP3(n))+sigma*(rand-0.5);
+            vS1(n)=vS1(n)+w1*(vS1(nearestN)-vS1(n))+w2*(vS1(globalN)-vS1(n))+sigma*(rand-0.5);
+            vS2(n)=vS2(n)+w1*(vS2(nearestN)-vS2(n))+w2*(vS2(globalN)-vS2(n))+sigma*(rand-0.5);
+            vS3(n)=vS3(n)+w1*(vS3(nearestN)-vS3(n))+w2*(vS3(globalN)-vS3(n))+sigma*(rand-0.5);
+            d1(n)=d1(n)+w1*(d1(nearestN)-d1(n))+w2*(d1(globalN)-d1(n))+sigma*(rand-0.5);
+            d2(n)=d2(n)+w1*(d2(nearestN)-d2(n))+w2*(d2(globalN)-d2(n))+sigma*(rand-0.5);
          end
     end
     
@@ -148,7 +153,7 @@ for k=(1:iter)
         set(plot4,'CData',err)
         
         figure(15)
-        axis([ax1 ax2 ax3 ax4],[0 5e3 0 5e3 0 1e8])
+        axis([ax1 ax2 ax3 ax4],[0 5e3 0 5e3 0 1e8 0 1e8])
         
         set(plot5,'XData',obsFreq)
         set(plot5,'YData',bestDispers)     

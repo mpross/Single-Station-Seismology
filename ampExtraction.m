@@ -17,8 +17,6 @@ err=[];
 
 for a=0:iter
     
-    temp=zeros(floor(length(filtSignal)/fitLength)-2,1);
-    
     %% Data Crunching  
     % Bandpass filtering to get data into frequency bins
     freq=(startFreq+a*freqStep);
@@ -27,6 +25,9 @@ for a=0:iter
     filtSignal=filter(bb,aa,signal);
 
     fitLength=floor(1/(freq/sampf)/4);
+        
+    temp=zeros(floor(length(signal)/fitLength)-2,1);
+    
     parfor j=1:floor(length(filtSignal)/fitLength)-2
 
         tim=(j*fitLength:(j+1)*fitLength)'./sampf;

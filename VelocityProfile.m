@@ -1,8 +1,11 @@
 %% Set-up
-close all
+% close all
 % clear all
 
-parpool(4);
+try
+    parpool(4);
+catch
+end
 
 props = java.lang.System.getProperties;
 props.setProperty('mail.smtp.port', '587');
@@ -17,9 +20,12 @@ setpref('Internet','SMTP_Password',password);
 testBool=false;
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
-    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9.mat" "Canada_6_6.mat" "Iceland_6_8.mat"];
+    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" ...
+    "NewZealand_6_9.mat" "Canada_6_6.mat" "Iceland_6_8.mat"];
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398];
+
+exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
 
 clipPass=zeros(1, length(earthquakes));
 vel=[];
@@ -55,9 +61,9 @@ if(false)
 end
     
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=length(earthquakes)
-    if or(clipPass(j)==1, not(testBool))
+for j=1:length(earthquakes)
+% for j=12
+    if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
 
@@ -143,7 +149,7 @@ for j=length(earthquakes)
         %% Phase Velocity Calculations
 
 %         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
-        in=find(C>0.87);
+        in=find(C>0.9);
         
         v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
         
@@ -156,24 +162,23 @@ for j=length(earthquakes)
         vel=[vel; v'];
         vFreq=[vFreq; f'];
         vErr=[vErr; err'];
-
-        obsDispers=movmean(vel,40);
+        
     else
         disp(earthquakes(j))
-        disp('Skipping this event due to clipped sensor.')
+        disp('Skipping this event.')
     end
-% end
+end
 %% Fit
 
+layers=3;
+[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
+if(layers==3)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
+elseif(layers==2)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside((1:5e4)-bestPar(3));
+end
 
-% layers=3;
-% [bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
-% if(layers==3)
-%     bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
-% elseif(layers==2)
-%     bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside((1:5e4)-bestPar(3));
-% end
-
+%% Plots
 figure(1)
 plot1=plot(tim,RX,tim,RY);
 grid on
@@ -217,35 +222,42 @@ set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
 
-end
+hold on
+plot2=plot(vFreq,bestDispers);
+ylabel('Velocity (m/s)')
+xlabel('Frequency (Hz)')
+set(gca,'XScale','log');
+ylim([0 3000])
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+hold off
 
-% fig2=figure(5);
-% plot2=plot(bestDepth,-(1:5e4)/1e3);
-% xlabel('Velocity (m/s)')
-% ylabel('Depth (km)')
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% set(plot2,'MarkerSize',16);
-% ylim([-40 0])
-% 
-% bestDepth=bestDepth/1e3;
-% dens=1.6612*bestDepth-0.4721*bestDepth.^2+0.0671*bestDepth.^3-0.0043*bestDepth.^4+0.000106*bestDepth.^5;
-% 
-% fig3=figure(6);
-% plot2=plot(dens,-(1:5e4)/1e3,1.3+0*(1:5e4),-(1:5e4)/1e3,2.65+0*(1:5e4),-(1:5e4)/1e3);
-% xlabel('Density (g/cm^3)')
-% ylabel('Depth (km)')
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% set(plot2,'MarkerSize',16);
-% legend('Measured','Density of silt loam soil','Density of quartz')
-% xlim([1 3])
-% ylim([-40 0])
-% 
+fig2=figure(5);
+plot2=plot(bestDepth,-(1:5e4)/1e3);
+xlabel('Velocity (m/s)')
+ylabel('Depth (km)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+ylim([-40 0])
+
+bestDepth=bestDepth/1e3;
+dens=1.6612*bestDepth-0.4721*bestDepth.^2+0.0671*bestDepth.^3-0.0043*bestDepth.^4+0.000106*bestDepth.^5;
+
+fig3=figure(6);
+plot2=plot(dens,-(1:5e4)/1e3,1.3+0*(1:5e4),-(1:5e4)/1e3,2.65+0*(1:5e4),-(1:5e4)/1e3);
+xlabel('Density (g/cm^3)')
+ylabel('Depth (km)')
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+set(plot2,'MarkerSize',16);
+legend('Measured','Density of silt loam soil','Density of quartz')
+xlim([1 3])
+ylim([-40 0])
+
 print(fig1,'-dpng','Rayleigh_Dispersion.png');
-% print(fig2,'-dpng','Velocity_Depth.png');
-% % print(fig3,'-dpng','Density_Depth.png');
-% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png'});
-
-delete(gcp('nocreate'))
+print(fig2,'-dpng','Velocity_Depth.png');
+print(fig3,'-dpng','Density_Depth.png');
+sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png', 'Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
