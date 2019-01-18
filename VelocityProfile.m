@@ -3,7 +3,7 @@
 % clear all
 
 try
-    parpool(4);
+    parpool();
 catch
 end
 
@@ -26,6 +26,17 @@ timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398];
 
 exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
+
+  
+%http://ds.iris.edu/spud/earthmodel/9991844
+PREMdepth=[0 12858 25716 38574 51432]/1e3;
+PREMdens=[13088.50 13088.46 13088.36 13088.18 13087.92]*0.0001;
+PREMvp=[11262.20 11262.17 11262.10 11261.97 11261.79]/1e3;
+PREMvs=[3667.80 3667.78 3667.73 3667.64 3667.51]/1e3;
+
+% Love and Rayleigh phase-velocity maps, 5–40 s, of the western and central USA from USArray data
+RefFreq=1./[5 10 20 40];
+RefVel=[2.93*0.4800 3.19*0.61 3.51*0.96 3.88*0.98]*1e3;
 
 clipPass=zeros(1, length(earthquakes));
 vel=[];
@@ -61,8 +72,8 @@ if(false)
 end
     
 %% Data pull and decimate
-for j=1:length(earthquakes)
-% for j=12
+% for j=1:length(earthquakes)
+for j=length(earthquakes)
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -137,45 +148,39 @@ for j=1:length(earthquakes)
         tim=tim(500*sampF:end);
 
         %% Coherence
-        [C, ERC, ~]=cohExtraction(sqrt(RX.^2+RY.^2), Z, sampF);
+        [CX, ERCX, ~]=cohExtraction(RX, Z, sampF);
+        [CY, ERCY, ~]=cohExtraction(RY, Z, sampF);
         
-        %% Spectra
-        [ARY, ERY, ~] = ampExtraction(RY, sampF);
-        [ARX, ERX, ~] = ampExtraction(RX, sampF);
-        [AX, EX, ~] = ampExtraction(X, sampF);
-        [AY, EY, ~] = ampExtraction(Y, sampF);
-        [AZ, EZ, F] = ampExtraction(Z, sampF);
+%         %% Spectra
+%         [ARY, ERY, ~] = ampExtraction(RY, sampF);
+%         [ARX, ERX, ~] = ampExtraction(RX, sampF);
+%         [AX, EX, ~] = ampExtraction(X, sampF);
+%         [AY, EY, ~] = ampExtraction(Y, sampF);
+%         [AZ, EZ, F] = ampExtraction(Z, sampF);
+        
+        [AV, EV, F] = velExtraction(Z, RX, RY, sampF);
 
         %% Phase Velocity Calculations
 
 %         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
-        in=find(C>0.9);
-        
-        v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
-        
-        errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
-        errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
-        errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
-        err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
-
-        f=F(in);
-        vel=[vel; v'];
-        vFreq=[vFreq; f'];
-        vErr=[vErr; err'];
+        in=find(or(CX>0.9,CY>0.9));
+%         
+%         v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
+%         
+%         errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
+%         errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
+%         errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
+%         err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
+% 
+%         f=F(in);
+%         vel=[vel; v'];
+%         vFreq=[vFreq; f'];
+%         vErr=[vErr; err'];
         
     else
         disp(earthquakes(j))
         disp('Skipping this event.')
     end
-end
-%% Fit
-
-layers=3;
-[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
-if(layers==3)
-    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
-elseif(layers==2)
-    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside((1:5e4)-bestPar(3));
 end
 
 %% Plots
@@ -191,36 +196,53 @@ plot1=plot(tim,X,tim,Y,tim,Z);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
+% 
+% figure(3)
+% plot2=loglog(F,abs(ARX),F,abs(ARY),F,abs(AX),F,abs(AY),F,abs(AZ));
+% grid on
+% set(plot2,'LineWidth',1.5);
+% set(gca,'FontSize',16);
+% ylabel('ASD (m/s or rad /\surd{Hz})')
+% xlabel('Frequency (Hz)')
+% legend('\theta_x','\theta_y','v_x','v_y','v_z')
 
-figure(3)
-plot2=loglog(F,abs(ARX),F,abs(ARY),F,abs(AX),F,abs(AY),F,abs(AZ));
-grid on
-set(plot2,'LineWidth',1.5);
-set(gca,'FontSize',16);
-ylabel('ASD (m/s or rad /\surd{Hz})')
-xlabel('Frequency (Hz)')
-legend('\theta_x','\theta_y','v_x','v_y','v_z')
-
-
-figure(5)
-plot2=loglog(F,C);
-grid on
-set(plot2,'LineWidth',1.5);
-set(gca,'FontSize',16);
-ylabel('Coherence')
-xlabel('Frequency (Hz)')
+% 
+% figure(5)
+% plot2=loglog(F,sqrt(CX.^2+CY.^2));
+% grid on
+% set(plot2,'LineWidth',1.5);
+% set(gca,'FontSize',16);
+% ylabel('Coherence')
+% xlabel('Frequency (Hz)')
 
 t=(cputime-t0)/3600
 
 fig1=figure(4);
-plot2=errorbar(vFreq,vel,vErr,'.');
+% plot2=errorbar(vFreq,vel,vErr,'.');
+plot2=errorbar(F(in),AV(in),EV(in),'.');
+hold on
+plot10=plot(RefFreq,RefVel,'.')
+hold off
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(gca,'XScale','log');
-ylim([0 3000])
+% ylim([0 3000])
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
+set(plot10,'MarkerSize',20);
+legend('Single Station','USArray Map')
+grid on
+
+%% Fit
+
+layers=3;
+[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
+if(layers==3)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
+elseif(layers==2)
+    bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside((1:5e4)-bestPar(3));
+end
 
 hold on
 plot2=plot(vFreq,bestDispers);
@@ -252,7 +274,7 @@ ylabel('Depth (km)')
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',16);
-legend('Measured','Density of silt loam soil','Density of quartz')
+legend('Measured','Density of silt loam soil','Density of quartz','Reference earth (PREM)')
 xlim([1 3])
 ylim([-40 0])
 
