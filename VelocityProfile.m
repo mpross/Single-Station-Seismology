@@ -27,6 +27,9 @@ timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
 
 exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
 
+fig8=figure(8)
+polarhistogram([],20,'Normalization','probability')
+hold on
   
 %http://ds.iris.edu/spud/earthmodel/9991844
 PREMdepth=[0 12858 25716 38574 51432]/1e3;
@@ -72,8 +75,8 @@ if(false)
 end
     
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=length(earthquakes)
+for j=1:length(earthquakes)
+% for j=length(earthquakes)
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -151,36 +154,55 @@ for j=length(earthquakes)
         [CX, ERCX, ~]=cohExtraction(RX, Z, sampF);
         [CY, ERCY, ~]=cohExtraction(RY, Z, sampF);
         
-%         %% Spectra
-%         [ARY, ERY, ~] = ampExtraction(RY, sampF);
-%         [ARX, ERX, ~] = ampExtraction(RX, sampF);
-%         [AX, EX, ~] = ampExtraction(X, sampF);
-%         [AY, EY, ~] = ampExtraction(Y, sampF);
-%         [AZ, EZ, F] = ampExtraction(Z, sampF);
+        %% Spectra
+        [ARY, ERY, ~] = ampExtraction(RY, sampF);
+        [ARX, ERX, ~] = ampExtraction(RX, sampF);
+        [AX, EX, ~] = ampExtraction(X, sampF);
+        [AY, EY, ~] = ampExtraction(Y, sampF);
+        [AZ, EZ, F] = ampExtraction(Z, sampF);
         
-        [AV, EV, F] = velExtraction(Z, RX, RY, sampF);
+%         [AV, EV, AA, EA, F] = velExtraction(Z, RX, RY, sampF);
 
         %% Phase Velocity Calculations
 
 %         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
         in=find(or(CX>0.9,CY>0.9));
 %         
-%         v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
-%         
-%         errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
-%         errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
-%         errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
-%         err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
+        v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
+        
+        phi=angle(AZ(in));
+        rotRX=real(ARX(in)).*cos(phi)+imag(ARX(in)).*sin(phi)...
+                +i.*(real(ARX(in)).*-sin(phi)+imag(ARX(in)).*cos(phi));
+        rotRY=real(ARY(in)).*cos(phi)+imag(ARY(in)).*sin(phi)...
+            +i.*(real(ARY(in)).*-sin(phi)+imag(ARY(in)).*cos(phi));
+        
+        ang=atan2(sign(real(rotRY)).*abs(ARY(in)),sign(real(rotRX)).*abs(ARX(in)));
+        
+        errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
+        errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
+        errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
+        err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
 % 
-%         f=F(in);
-%         vel=[vel; v'];
-%         vFreq=[vFreq; f'];
-%         vErr=[vErr; err'];
+%         vel=[vel; AV(in)'];
+%         vFreq=[vFreq; F(in)'];
+%         vErr=[vErr; EV(in)'];
+
+        vel=[vel; v'];
+        vFreq=[vFreq; F(in)'];
+        vErr=[vErr; err'];
+        
+        fig8=figure(8)
+        polarhistogram(ang,20,'Normalization','probability')        
         
     else
         disp(earthquakes(j))
         disp('Skipping this event.')
     end
+end
+
+vAv=[];
+for i=1:length(F)
+    vAv=[vAv; mean(vel(find(vFreq==F(i))))]
 end
 
 %% Plots
@@ -218,20 +240,22 @@ set(gca,'FontSize',16);
 t=(cputime-t0)/3600
 
 fig1=figure(4);
-% plot2=errorbar(vFreq,vel,vErr,'.');
-plot2=errorbar(F(in),AV(in),EV(in),'.');
+plot2=errorbar(vFreq,vel/1e3,vErr/1e3,'.');
+% plot2=errorbar(F(in),AV(in),EV(in),'.');
 hold on
-plot10=plot(RefFreq,RefVel,'.')
+plot11=plot(F,vAv/1e3)
+plot10=plot(RefFreq,RefVel/1e3,'.')
 hold off
-ylabel('Velocity (m/s)')
+ylabel('Velocity (km/s)')
 xlabel('Frequency (Hz)')
 set(gca,'XScale','log');
 % ylim([0 3000])
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
-set(plot2,'MarkerSize',16);
-set(plot10,'MarkerSize',20);
-legend('Single Station','USArray Map')
+set(plot2,'MarkerSize',2);
+set(plot10,'MarkerSize',30);
+set(plot11,'LineWidth',3);
+legend('Single Station','Average','USArray Map')
 grid on
 
 %% Fit
@@ -278,8 +302,10 @@ legend('Measured','Density of silt loam soil','Density of quartz','Reference ear
 xlim([1 3])
 ylim([-40 0])
 
+
 print(fig1,'-dpng','Rayleigh_Dispersion.png');
 print(fig2,'-dpng','Velocity_Depth.png');
 print(fig3,'-dpng','Density_Depth.png');
+print(fig8,'-dpng','AnglePlot.png');
 sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png', 'Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
+   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png', 'AnglePlot.png','Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
