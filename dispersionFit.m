@@ -103,6 +103,7 @@ for k=(1:iter)
         fitDispers(isnan(fitDispers))=0;
         err(n)=sum((fitDispers-obsDispers).^2);        
     end
+    fitDispers
     w1=0.5;
     w2=0.1;
     sigma=(iter-k)*1;

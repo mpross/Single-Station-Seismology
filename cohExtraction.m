@@ -31,7 +31,7 @@ for a=0:iter
         
     temp=zeros(floor(length(filtSignal1)/fitLength)-2,1);
     
-    parfor j=1:floor(length(filtSignal1)/fitLength)-2
+    for j=1:floor(length(filtSignal1)/fitLength)-2
 
         cut1=filtSignal1(j*fitLength:(j+1)*fitLength);
         cut2=filtSignal2(j*fitLength:(j+1)*fitLength);

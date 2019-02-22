@@ -37,7 +37,7 @@ for a=0:iter
         
         w=cut'*x/(x'*x);
         
-        temp(j)=abs(w(2))+abs(w(1))*1i
+        temp(j)=w(2)+w(1)*1i
         
     end
     

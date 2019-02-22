@@ -1,11 +1,11 @@
 %% Set-up
-% close all
+close all
 % clear all
 
-try
-    parpool();
-catch
-end
+% try
+%     parpool();
+% catch
+% end
 
 props = java.lang.System.getProperties;
 props.setProperty('mail.smtp.port', '587');
@@ -27,8 +27,9 @@ timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
 
 exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
 
-fig8=figure(8)
+fig8=figure(8);
 polarhistogram([],20,'Normalization','probability')
+legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland')
 hold on
   
 %http://ds.iris.edu/spud/earthmodel/9991844
@@ -70,13 +71,12 @@ if(false)
     % Sensor clipping check
         clippingCheck
         disp(['Clipping Check ' num2str(sum(clipPass)) ' out of ' num2str(length(clipPass)) ' passed'])
-
         disp(' ')
 end
     
 %% Data pull and decimate
 for j=1:length(earthquakes)
-% for j=length(earthquakes)
+% for j=1
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -142,67 +142,86 @@ for j=1:length(earthquakes)
         Z=filter(b,a,Z);
         RY=filter(b,a,RY);
         RX=filter(b,a,RX);
-
-        RY=RY(500*sampF:end);
-        RX=RX(500*sampF:end);
+        
         Z=Z(500*sampF:end);
         X=X(500*sampF:end);
         Y=Y(500*sampF:end);
+        
+        RY=RY(500*sampF:end)-1.27e-4*X;
+        RX=RX(500*sampF:end)-2.91e-4*Y;
+        
         tim=tim(500*sampF:end);
 
         %% Coherence
         [CX, ERCX, ~]=cohExtraction(RX, Z, sampF);
         [CY, ERCY, ~]=cohExtraction(RY, Z, sampF);
         
-        %% Spectra
-        [ARY, ERY, ~] = ampExtraction(RY, sampF);
-        [ARX, ERX, ~] = ampExtraction(RX, sampF);
-        [AX, EX, ~] = ampExtraction(X, sampF);
-        [AY, EY, ~] = ampExtraction(Y, sampF);
-        [AZ, EZ, F] = ampExtraction(Z, sampF);
+        in=find(or(CX>0.9,CY>0.9));
         
-%         [AV, EV, AA, EA, F] = velExtraction(Z, RX, RY, sampF);
+        %% Spectra
+%         [ARY, ERY, ~] = ampExtraction(RY, sampF);
+%         [ARX, ERX, ~] = ampExtraction(RX, sampF);
+%         [AX, EX, ~] = ampExtraction(X, sampF);
+%         [AY, EY, ~] = ampExtraction(Y, sampF);
+%         [AZ, EZ, F] = ampExtraction(Z, sampF);
+        
+        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
 
         %% Phase Velocity Calculations
 
 %         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
-        in=find(or(CX>0.9,CY>0.9));
+%         in=find(or(CX>0.9,CY>0.9));
 %         
-        v=abs(AZ(in)./sqrt(ARX(in).^2+ARY(in).^2));
+%         v=abs(AZ(in))./sqrt(abs(ARX(in)).^2+abs(ARY(in)).^2);
         
-        phi=angle(AZ(in));
-        rotRX=real(ARX(in)).*cos(phi)+imag(ARX(in)).*sin(phi)...
-                +i.*(real(ARX(in)).*-sin(phi)+imag(ARX(in)).*cos(phi));
-        rotRY=real(ARY(in)).*cos(phi)+imag(ARY(in)).*sin(phi)...
-            +i.*(real(ARY(in)).*-sin(phi)+imag(ARY(in)).*cos(phi));
+%         phi=angle(AZ(in));
+%         rotRX=real(ARX(in)).*cos(phi)+imag(ARX(in)).*sin(phi)...
+%                 +i.*(real(ARX(in)).*-sin(phi)+imag(ARX(in)).*cos(phi));
+%         rotRY=real(ARY(in)).*cos(phi)+imag(ARY(in)).*sin(phi)...
+%             +i.*(real(ARY(in)).*-sin(phi)+imag(ARY(in)).*cos(phi));
+%         
+%         ang=atan2(sign(real(rotRY)).*abs(ARY(in)),sign(real(rotRX)).*abs(ARX(in)));
         
-        ang=atan2(sign(real(rotRY)).*abs(ARY(in)),sign(real(rotRX)).*abs(ARX(in)));
-        
-        errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
-        errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
-        errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
-        err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
-% 
+%         errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
+%         errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
+%         errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
+%         err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
+% % 
 %         vel=[vel; AV(in)'];
 %         vFreq=[vFreq; F(in)'];
 %         vErr=[vErr; EV(in)'];
-
-        vel=[vel; v'];
-        vFreq=[vFreq; F(in)'];
-        vErr=[vErr; err'];
         
-        fig8=figure(8)
-        polarhistogram(ang,20,'Normalization','probability')        
+        vel=[vel; AV'];
+        vFreq=[vFreq; F'];
+        vErr=[vErr; EV'];
+% 
+%         vel=[vel; v'];
+%         vFreq=[vFreq; F(in)'];
+%         vErr=[vErr; err'];
+        
+%         fig8=figure(8)
+%         polarhistogram(ang,20,'Normalization','probability')
+        
+%         fig8=figure(8)
+%         polarhistogram(AA(in)',20,'Normalization','probability')   
         
     else
         disp(earthquakes(j))
         disp('Skipping this event.')
     end
 end
-
+%%
 vAv=[];
+fAv=[];
+aAv=[];
 for i=1:length(F)
-    vAv=[vAv; mean(vel(find(vFreq==F(i))))]
+    if not(isnan(mean(vel(find(vFreq==F(i))))))
+        vAv=[vAv; mean(vel(find(vFreq==F(i))))];
+        fAv=[fAv; F(i)];
+    end
+    if not(isnan(AA(i)))
+        aAv=[aAv; AA(i)];
+    end
 end
 
 %% Plots
@@ -243,8 +262,8 @@ fig1=figure(4);
 plot2=errorbar(vFreq,vel/1e3,vErr/1e3,'.');
 % plot2=errorbar(F(in),AV(in),EV(in),'.');
 hold on
-plot11=plot(F,vAv/1e3)
-plot10=plot(RefFreq,RefVel/1e3,'.')
+plot11=plot(fAv,vAv/1e3);
+plot10=plot(RefFreq,RefVel/1e3,'.');
 hold off
 ylabel('Velocity (km/s)')
 xlabel('Frequency (Hz)')
@@ -261,7 +280,7 @@ grid on
 %% Fit
 
 layers=3;
-[bestPar,bestDispers]=dispersionFit(vFreq,vel,layers);
+[bestPar,bestDispers]=dispersionFit(fAv,vAv,layers);
 if(layers==3)
     bestDepth=bestPar(1)*heaviside(-(1:5e4)+bestPar(3))+bestPar(4)*heaviside(-(1:5e4)+bestPar(6)).*heaviside((1:5e4)-bestPar(3))+bestPar(7)*heaviside((1:5e4)-bestPar(6));
 elseif(layers==2)
@@ -269,7 +288,7 @@ elseif(layers==2)
 end
 
 hold on
-plot2=plot(vFreq,bestDispers);
+plot2=plot(vAv,bestDispers);
 ylabel('Velocity (m/s)')
 xlabel('Frequency (Hz)')
 set(gca,'XScale','log');
