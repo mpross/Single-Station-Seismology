@@ -4,7 +4,7 @@ function [C, err, F]=cohExtraction(signal1, signal2, sampf)
 % [C, err, F]=cohExtraction(signal1, signal2, sampf)
 
 startFreq=0.01;
-freqStep=.005;
+freqStep=.01;
 endFreq=1;
 
 iter=floor((endFreq-startFreq)/freqStep);

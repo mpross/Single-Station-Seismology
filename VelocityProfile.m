@@ -25,6 +25,8 @@ earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398];
 
+angOffset=[180, 0, 0, 180, 0, 0, 0, 180, 180, 0, 180, 90, 0]
+
 exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
 
 fig8=figure(8);
@@ -76,7 +78,7 @@ end
     
 %% Data pull and decimate
 for j=1:length(earthquakes)
-% for j=1
+% for j=length(earthquakes)
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -154,56 +156,19 @@ for j=1:length(earthquakes)
 
         %% Coherence
         [CX, ERCX, ~]=cohExtraction(RX, Z, sampF);
-        [CY, ERCY, ~]=cohExtraction(RY, Z, sampF);
+        [CY, ERCY, F]=cohExtraction(RY, Z, sampF);
         
         in=find(or(CX>0.9,CY>0.9));
         
         %% Spectra
-%         [ARY, ERY, ~] = ampExtraction(RY, sampF);
-%         [ARX, ERX, ~] = ampExtraction(RX, sampF);
-%         [AX, EX, ~] = ampExtraction(X, sampF);
-%         [AY, EY, ~] = ampExtraction(Y, sampF);
-%         [AZ, EZ, F] = ampExtraction(Z, sampF);
         
-        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
+        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in, angOffset(j));
 
         %% Phase Velocity Calculations
 
-%         in=find(and(or(abs(ARX)>1e-12,abs(ARY)>1e-12),abs(AZ)>5e-10));
-%         in=find(or(CX>0.9,CY>0.9));
-%         
-%         v=abs(AZ(in))./sqrt(abs(ARX(in)).^2+abs(ARY(in)).^2);
-        
-%         phi=angle(AZ(in));
-%         rotRX=real(ARX(in)).*cos(phi)+imag(ARX(in)).*sin(phi)...
-%                 +i.*(real(ARX(in)).*-sin(phi)+imag(ARX(in)).*cos(phi));
-%         rotRY=real(ARY(in)).*cos(phi)+imag(ARY(in)).*sin(phi)...
-%             +i.*(real(ARY(in)).*-sin(phi)+imag(ARY(in)).*cos(phi));
-%         
-%         ang=atan2(sign(real(rotRY)).*abs(ARY(in)),sign(real(rotRX)).*abs(ARX(in)));
-        
-%         errZ=abs(1./sqrt(ARX.^2+ARY.^2).*EZ);
-%         errX= abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARY.*ERY);
-%         errY=abs(AZ./(ARX.^2+ARY.^2).^(3/2).*ARX.*ERX);
-%         err= sqrt(errZ(in).^2+errX(in).^2+errY(in).^2);
-% % 
-%         vel=[vel; AV(in)'];
-%         vFreq=[vFreq; F(in)'];
-%         vErr=[vErr; EV(in)'];
-        
         vel=[vel; AV'];
-        vFreq=[vFreq; F'];
+        vFreq=[vFreq; F];
         vErr=[vErr; EV'];
-% 
-%         vel=[vel; v'];
-%         vFreq=[vFreq; F(in)'];
-%         vErr=[vErr; err'];
-        
-%         fig8=figure(8)
-%         polarhistogram(ang,20,'Normalization','probability')
-        
-%         fig8=figure(8)
-%         polarhistogram(AA(in)',20,'Normalization','probability')   
         
     else
         disp(earthquakes(j))
@@ -218,9 +183,6 @@ for i=1:length(F)
     if not(isnan(mean(vel(find(vFreq==F(i))))))
         vAv=[vAv; mean(vel(find(vFreq==F(i))))];
         fAv=[fAv; F(i)];
-    end
-    if not(isnan(AA(i)))
-        aAv=[aAv; AA(i)];
     end
 end
 
@@ -237,15 +199,14 @@ plot1=plot(tim,X,tim,Y,tim,Z);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
-% 
-% figure(3)
-% plot2=loglog(F,abs(ARX),F,abs(ARY),F,abs(AX),F,abs(AY),F,abs(AZ));
-% grid on
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% ylabel('ASD (m/s or rad /\surd{Hz})')
-% xlabel('Frequency (Hz)')
-% legend('\theta_x','\theta_y','v_x','v_y','v_z')
+
+figure(3)
+plot2=semilogx(F,AA*180/pi);
+grid on
+set(plot2,'LineWidth',1.5);
+set(gca,'FontSize',16);
+ylabel('Angle (degrees)')
+xlabel('Frequency (Hz)')
 
 % 
 % figure(5)
