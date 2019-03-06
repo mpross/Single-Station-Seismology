@@ -20,14 +20,14 @@ setpref('Internet','SMTP_Password',password);
 testBool=false;
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
-    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" ...
-    "NewZealand_6_9.mat" "Canada_6_6.mat" "Iceland_6_8.mat"];
+    "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9" "Canada_6_6" "Iceland_6_8" ...
+    "Peru_7_0" "Peru_7_5"];
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
-    1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398];
+    1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398 ...
+    1235465459 1234865860];
 
-angOffset=[180, 0, 0, 180, 0, 0, 0, 180, 180, 0, 180, 90, 0]
-
-exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
+% exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
+exclude=[""];
 
 fig8=figure(8);
 polarhistogram([],20,'Normalization','probability')
@@ -91,8 +91,7 @@ for j=1:length(earthquakes)
         rawRX=rawData.rawData(2);
         inRX=decimate(rawRX.data,rawRX.rate/8)*1e-9;
 
-        rawX=rawData.rawData(3); 
-        inX=decimate(rawX.data,rawX.rate/8)*1e-9;
+        rawX=rawData.rawData(3);         inX=decimate(rawX.data,rawX.rate/8)*1e-9;
 
         rawY=rawData.rawData(4); 
         inY=decimate(rawY.data,rawY.rate/8)*1e-9;
@@ -159,10 +158,9 @@ for j=1:length(earthquakes)
         [CY, ERCY, F]=cohExtraction(RY, Z, sampF);
         
         in=find(or(CX>0.9,CY>0.9));
-        
         %% Spectra
         
-        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in, angOffset(j));
+        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
 
         %% Phase Velocity Calculations
 

@@ -36,49 +36,19 @@ for a=0:iter
         filtY=filter(bb,aa,y);
         filtRX=filter(bb,aa,rx);
         filtRY=filter(bb,aa,ry);
-
-        fitLength=floor(1/(freq/sampf));
-
-        tempZ=zeros(floor(length(z)/fitLength)-2,1);
-        tempX=zeros(floor(length(x)/fitLength)-2,1);
-        tempY=zeros(floor(length(y)/fitLength)-2,1);
-        tempRX=zeros(floor(length(rx)/fitLength)-2,1);
-        tempRY=zeros(floor(length(ry)/fitLength)-2,1);
-
-        tempV=zeros(floor(length(ry)/fitLength)-2,1);
-        tempA=zeros(floor(length(ry)/fitLength)-2,1);
-
-        for j=1:floor(length(filtZ)/fitLength)-2
-
-            tim=(j*fitLength:(j+1)*fitLength)'./sampf;
-            cutZ=filtZ(j*fitLength:(j+1)*fitLength);
-            cutX=filtX(j*fitLength:(j+1)*fitLength);
-            cutY=filtY(j*fitLength:(j+1)*fitLength);
-            cutRX=filtRX(j*fitLength:(j+1)*fitLength);
-            cutRY=filtRY(j*fitLength:(j+1)*fitLength);
-
-            if max(abs(cutZ))>=0.5*max(abs(filtZ))
-                fitx=[sin(2*pi*freq*tim), cos(2*pi*freq*tim)];
-
-                wZ=cutZ'*fitx/(fitx'*fitx);
-                wX=cutX'*fitx/(fitx'*fitx);
-                wY=cutY'*fitx/(fitx'*fitx);
-                wRX=cutRX'*fitx/(fitx'*fitx);
-                wRY=cutRY'*fitx/(fitx'*fitx);
-
-                tempZ(j)=wZ(2)+wZ(1)*1i;
-                tempX(j)=wX(2)+wX(1)*1i;
-                tempY(j)=wY(2)+wY(1)*1i;
-
-                % Extra term is translational coupling subtraction
-                tempRX(j)=wRX(2)+wRX(1)*1i+3.8e-4*tempY(j);
-                tempRY(j)=wRY(2)+wRY(1)*1i+1.5e-4*tempX(j);
-
-                tempV(j)=abs(tempZ(j))./sqrt(abs(tempRX(j)).^2+abs(tempRY(j)).^2);
-                tempA(j)=atan2(abs(tempRY(j)),abs(tempRX(j)));
-
-            end
-        end    
+        
+        hilRX=hilbert(filtRX);
+        hilRY=hilbert(filtRY);
+        hilX=hilbert(filtX);
+        hilY=hilbert(filtY);
+        hilZ=hilbert(filtZ);
+        
+        tempV=abs(hilZ)./sqrt(abs(hilRX).^2+abs(hilRY).^2);
+        tempA=atan2(abs(hilRY),abs(hilRX));
+        
+        cutIndex=find(abs(hilZ)>0.1*max(abs(hilZ)));
+        tempA=tempA(cutIndex);
+        tempV=tempV(cutIndex);
     
         angHist=[angHist; tempA];
         V=[V mean(nonzeros(tempV))];
@@ -91,5 +61,5 @@ for a=0:iter
 end
 
 fig8=figure(8);
-polarhistogram(nonzeros(angHist)+angOffset*pi/180,'Normalization','probability')   
+polarhistogram(nonzeros(angHist)+202.5*pi/180,'Normalization','probability')
 legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland')
