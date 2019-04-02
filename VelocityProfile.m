@@ -26,13 +26,8 @@ timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398 ...
     1235465459 1234865860];
 
-% exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
-exclude=[""];
-
-fig8=figure(8);
-polarhistogram([],20,'Normalization','probability')
-legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland')
-hold on
+exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
+% exclude=[""];
   
 %http://ds.iris.edu/spud/earthmodel/9991844
 PREMdepth=[0 12858 25716 38574 51432]/1e3;
@@ -50,6 +45,11 @@ vFreq=[];
 vErr=[];
 sampF=8;
 t0=cputime;
+
+fig8=figure(8);
+polarhistogram([],20,'Normalization','probability')   
+legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland','Peru','Peru')
+hold on
 
 %% Code tests
 if(false)
@@ -77,8 +77,8 @@ if(false)
 end
     
 %% Data pull and decimate
-for j=1:length(earthquakes)
-% for j=length(earthquakes)
+% for j=1:length(earthquakes)
+for j=1
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -91,7 +91,8 @@ for j=1:length(earthquakes)
         rawRX=rawData.rawData(2);
         inRX=decimate(rawRX.data,rawRX.rate/8)*1e-9;
 
-        rawX=rawData.rawData(3);         inX=decimate(rawX.data,rawX.rate/8)*1e-9;
+        rawX=rawData.rawData(3);         
+        inX=decimate(rawX.data,rawX.rate/8)*1e-9;
 
         rawY=rawData.rawData(4); 
         inY=decimate(rawY.data,rawY.rate/8)*1e-9;
@@ -146,10 +147,9 @@ for j=1:length(earthquakes)
         
         Z=Z(500*sampF:end);
         X=X(500*sampF:end);
-        Y=Y(500*sampF:end);
-        
-        RY=RY(500*sampF:end)-1.27e-4*X;
-        RX=RX(500*sampF:end)-2.91e-4*Y;
+        Y=Y(500*sampF:end);        
+        RY=RY(500*sampF:end);
+        RX=RX(500*sampF:end);
         
         tim=tim(500*sampF:end);
 
@@ -160,7 +160,7 @@ for j=1:length(earthquakes)
         in=find(or(CX>0.9,CY>0.9));
         %% Spectra
         
-        [AV, EV, AA, EA, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
+        [AV, EV, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
 
         %% Phase Velocity Calculations
 
@@ -186,7 +186,7 @@ end
 
 %% Plots
 figure(1)
-plot1=plot(tim,RX,tim,RY);
+plot1=plot(tim,RX,tim,RY,tim,Z/4000);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
@@ -197,23 +197,6 @@ plot1=plot(tim,X,tim,Y,tim,Z);
 grid on
 set(plot1,'LineWidth',1.5);
 set(gca,'FontSize',16);
-
-figure(3)
-plot2=semilogx(F,AA*180/pi);
-grid on
-set(plot2,'LineWidth',1.5);
-set(gca,'FontSize',16);
-ylabel('Angle (degrees)')
-xlabel('Frequency (Hz)')
-
-% 
-% figure(5)
-% plot2=loglog(F,sqrt(CX.^2+CY.^2));
-% grid on
-% set(plot2,'LineWidth',1.5);
-% set(gca,'FontSize',16);
-% ylabel('Coherence')
-% xlabel('Frequency (Hz)')
 
 t=(cputime-t0)/3600
 
@@ -281,9 +264,8 @@ xlim([1 3])
 ylim([-40 0])
 
 
-print(fig1,'-dpng','Rayleigh_Dispersion.png');
-print(fig2,'-dpng','Velocity_Depth.png');
-print(fig3,'-dpng','Density_Depth.png');
-print(fig8,'-dpng','AnglePlot.png');
-sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png', 'AnglePlot.png','Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
+% print(fig1,'-dpng','Rayleigh_Dispersion.png');
+% print(fig2,'-dpng','Velocity_Depth.png');
+% print(fig3,'-dpng','Density_Depth.png');
+% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
