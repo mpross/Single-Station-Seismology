@@ -3,8 +3,8 @@ function [V, errV, F]=velExtraction(z, x, y, rx,ry,sampf, inFreq, angOffset)
 %
 % [V, err, F]=ampExtraction(z,rx,ry,sampF)
 
-startFreq=0.01;
-freqStep=0.01;
+startFreq=0.02;
+freqStep=0.02;
 endFreq=1;
 
 iter=floor((endFreq-startFreq)/freqStep);
@@ -20,8 +20,9 @@ V=[];
 A=[];
 errV=[];
 errA=[];
-angHist1=[];
-angHist2=[];
+angHist=[];
+deltaXHist=[];
+deltaYHist=[];
 
 for a=0:iter
 %     if max(a==inFreq)==1
@@ -45,16 +46,16 @@ for a=0:iter
         hilZ=hilbert(filtZ(100*sampf:end));       
         
         
-        tempV=abs(hilZ)./sqrt(abs(hilRX).^2+abs(hilRY).^2);
-        tempA=atan2(abs(hilRX),abs(hilRY));
+%         tempV=abs(hilZ)./sqrt(abs(hilRX).^2+abs(hilRY).^2);
+%         tempA=atan2(abs(hilRX),abs(hilRY));
         
-        cutLevel=0.0*max(abs(hilZ));
-        cutIndex=find(abs(hilZ)<cutLevel);
+%         cutLevel=0.1*max(abs(hilZ));
+%         cutIndex=find(abs(hilZ)<cutLevel);
         
-        tempV(cutIndex)=0;
-        tempA(cutIndex)=0;
+%         tempV(cutIndex)=0;
+%         tempA(cutIndex)=0;
         
-        tim1=(1:length(hilZ))/sampf;
+%         tim1=(1:length(hilZ))/sampf;
         
         
         
@@ -63,25 +64,31 @@ for a=0:iter
 %         V=[V mean(nonzeros(tempV))];
 %         errV=[errV std(nonzeros(tempV))/sqrt(length(nonzeros(tempV)))];
 
-        cutIndex=find(abs(hilZ)>cutLevel);
-%         
+%         cutIndex=find(abs(hilZ)>cutLevel);
+% %         
 %         hilZ=hilZ(cutIndex);
 %         hilX=hilX(cutIndex);
 %         hilY=hilY(cutIndex);
 %         hilRY=hilRY(cutIndex);
 %         hilRX=hilRX(cutIndex);
+%         
+%         filtZ=filtZ(cutIndex);
+%         filtX=filtX(cutIndex);
+%         filtY=filtY(cutIndex);
+%         filtRY=filtRY(cutIndex);
+%         filtRX=filtRX(cutIndex);
         
-        phiRX=((unwrap(angle(hilRX)))-(unwrap(angle(hilZ))));
-        phiRY=((unwrap(angle(hilRY)))-(unwrap(angle(hilZ))));
-        rotRX=real(hilRX).*cos(phiRX)+imag(hilRX).*sin(phiRX)...
-                +i.*(real(hilRX).*-sin(phiRX)+imag(hilRX).*cos(phiRX));
-        rotRY=real(hilRY).*cos(phiRY)+imag(hilRY).*sin(phiRY)...
-            +i.*(real(hilRY).*-sin(phiRY)+imag(hilRY).*cos(phiRY));
-        
-        tempV=abs(hilZ)./sqrt(abs(hilRX).^2+abs(hilRY).^2);
-        tempA=unwrap(atan2(sign(cos(phiRX)).*abs(hilRX),sign(cos(phiRY)).*abs(hilRY)));
-        
-        tim2=(1:length(hilZ))/sampf;
+%         phiRX=((unwrap(angle(hilRX)))-(unwrap(angle(hilZ))));
+%         phiRY=((unwrap(angle(hilRY)))-(unwrap(angle(hilZ))));
+%         rotRX=real(hilRX).*cos(phiRX)+imag(hilRX).*sin(phiRX)...
+%                 +i.*(real(hilRX).*-sin(phiRX)+imag(hilRX).*cos(phiRX));
+%         rotRY=real(hilRY).*cos(phiRY)+imag(hilRY).*sin(phiRY)...
+%             +i.*(real(hilRY).*-sin(phiRY)+imag(hilRY).*cos(phiRY));
+%         
+%         tempV=abs(hilZ)./sqrt(abs(hilRX).^2+abs(hilRY).^2);
+%         tempA=unwrap(atan2(sign(cos(phiRX)).*abs(hilRX),sign(cos(phiRY)).*abs(hilRY)));
+%         
+%         tim2=(1:length(hilZ))/sampf;
        
 %         figure(100)
 %         plot(tim2,tempV)
@@ -103,47 +110,29 @@ for a=0:iter
 %         plot(tim2,((unwrap(angle(hilRY)))-(unwrap(angle(hilZ))))*180/pi) 
 %         hold off
 % 
-%         hilX=detrend(abs(hilX),'constant');
-%         hilY=detrend(abs(hilY),'constant');
-%         hilRX=detrend(abs(hilRX),'constant');
-%         hilRY=detrend(abs(hilRY),'constant');
-%         hilZ=detrend(abs(hilZ),'constant');
-%         
-        zx=inv(abs(hilZ)'*abs(hilZ))*abs(hilX)'*abs(hilZ);
-        zy=inv(abs(hilZ)'*abs(hilZ))*abs(hilY)'*abs(hilZ);
+        hilX=detrend(abs(hilX),'constant');
+        hilY=detrend(abs(hilY),'constant');
+        hilRX=detrend(abs(hilRX),'constant');
+        hilRY=detrend(abs(hilRY),'constant');
+        hilZ=detrend(abs(hilZ),'constant');
         
-        subX=abs(hilX)-zx*abs(hilZ);
-        subY=abs(hilY)-zy*abs(hilZ);
+        fitX=[hilRX, hilX]';
+        fitY=[hilRY, hilY]';
+       
+        wX=inv(fitX*fitX')*fitX*hilZ;
+        wY=inv(fitY*fitY')*fitY*hilZ; 
         
-        thxy=inv(abs(subX)'*abs(subX))*abs(hilRY)'*abs(subX);
-        thyx=inv(abs(subY)'*abs(subY))*abs(hilRX)'*abs(subY);
-%         
-%         figure(300)
-%         plot(tim2, abs(hilZ), tim2, abs(hilX), tim2, abs(hilX)-zx*abs(hilZ))
-%         legend('Z','X','X-Z')
-%         
-%         figure(301)
-%         plot(tim2, abs(hilZ), tim2, abs(hilY), tim2, abs(hilY)-zy*abs(hilZ))
-%         legend('Z','X','X-Z')
+%         figure(100)
+%         plot(tim2, filtZ, tim2, wX'*fitX)%, tim2, 4e3*filtRX, tim2, filtX
         
-        hilRX=abs(hilRX)-thxy*subY;
-        hilRY=abs(hilRY)-thyx*subX;
+        % Translational coupling
+        deltaXHist=[deltaXHist wX(2)/wX(1)];
+        deltaYHist=[deltaYHist wY(2)/wY(1)];
         
-        vx=inv(abs(hilRX)'*abs(hilRX))*abs(hilZ)'*abs(hilRX);
-        vy=inv(abs(hilRY)'*abs(hilRY))*abs(hilZ)'*abs(hilRY);        
+        vx=wX(1);
+        vy=wY(1);
         
-%         figure(302)
-%         plot(tim2, abs(hilRX), tim2, thxy*subY, tim2, abs(hilRX)-thxy*subY, tim2, 1/vx*abs(hilZ))
-%         legend('RX','Y','RX-Y','Z')        
-%         
-%         figure(303)
-%         plot(tim2, abs(hilRY), tim2, thyx*subX, tim2, abs(hilRY)-thxy*subX, tim2, 1/vy*abs(hilZ))
-%         legend('RY','X','RY-X','Z')
-        
-        zx/zy;
-        vx/vy;
-        
-%         vx=inv(filtRX'*filtRX)*filtZ'*filtRX;
+%         vx=inv(hilRX'*hilRX)*hilZ'*filtRX;
 %         vy=inv(filtRY'*filtRY)*filtZ'*filtRY;
 %         sqrt(vx^2+vy^2)
 %         mean(abs(hilZ))./sqrt(mean(abs(hilRX)).^2+mean(abs(hilRY)).^2)  
@@ -151,8 +140,7 @@ for a=0:iter
 %         V=[V mean(abs(hilZ))./sqrt(mean(abs(hilRX)).^2+mean(abs(hilRY)).^2)];
         errV=[errV 0];
         V=[V sqrt(vx^2+vy^2)];
-        angHist1=[angHist1 atan2(vy,vx)];
-        angHist2=[angHist1 atan2(zy,zx)];
+        angHist=[angHist atan2(vy,vx)];
 %         angHist=[angHist tempA'];
 %         errV=[errV sqrt( (std(abs(hilZ))^2*(mean(abs(hilRX)).^2+mean(abs(hilRY)).^2).^2+...
 %             (std(abs(hilRX))^2)*mean(abs(hilRX)).^2+...
@@ -163,7 +151,8 @@ for a=0:iter
 end
 
 fig8=figure(8);
-polarhistogram(angHist1+225/180*pi,20,'Normalization','probability')   
-hold on
-polarhistogram(angHist2+225/180*pi,20,'Normalization','probability')   
+polarhistogram(angHist+225/180*pi,20,'Normalization','probability')   
 legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland','Peru','Peru')
+
+figure(9)
+histogram(log10(deltaXHist),20)
