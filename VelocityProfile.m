@@ -45,11 +45,11 @@ vFreq=[];
 vErr=[];
 sampF=8;
 t0=cputime;
-
-fig8=figure(8);
-polarhistogram([],20,'Normalization','probability')   
-legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland','Peru','Peru')
-hold on
+% 
+% fig8=figure(8);
+% polarhistogram([],20,'Normalization','probability')   
+% legend('','Mexico','Fiji','Venezula','Peru','NewZealand','Canada','Iceland','Peru','Peru')
+% hold on
 
 %% Code tests
 if(false)
@@ -77,8 +77,8 @@ if(false)
 end
     
 %% Data pull and decimate
-% for j=1:length(earthquakes)
-for j=1
+for j=1:length(earthquakes)
+% for j=1
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -263,9 +263,9 @@ legend('Measured','Density of silt loam soil','Density of quartz','Reference ear
 xlim([1 3])
 ylim([-40 0])
 
-% 
-% print(fig1,'-dpng','Rayleigh_Dispersion.png');
-% print(fig2,'-dpng','Velocity_Depth.png');
-% print(fig3,'-dpng','Density_Depth.png');
-% sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
-%    newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
+
+print(fig1,'-dpng','Rayleigh_Dispersion.png');
+print(fig2,'-dpng','Velocity_Depth.png');
+print(fig3,'-dpng','Density_Depth.png');
+sendmail('mpross2@uw.edu','Earthquake Analysis Complete',"Completion Time: "+num2str(t)+" hours"+newline+...
+   newline+"Earthquakes: "+strjoin(earthquakes)+newline+"Times: "+num2str(timeStamp),{'Rayleigh_Dispersion.png','Velocity_Depth.png', 'Density_Depth.png', 'dispersionSwarm.avi'});
