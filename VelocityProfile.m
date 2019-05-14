@@ -21,10 +21,10 @@ testBool=false;
 
 earthquakes=["Mexico_5_9" "Oklahoma_4_4" "Indonesia_6_9" "Fiji_8_2" "CostaRica_6_1" ...
     "Fiji_6_8" "Oregon_6_2" "Venezuela_7_3" "Peru_7_1" "Fiji_7_8" "NewZealand_6_9" "Canada_6_6" "Iceland_6_8" ...
-    "Peru_7_0" "Peru_7_5"];
+    "Peru_7_0" "Peru_7_5" "Papua_New_Guinea_7_5"];
 timeStamp=[1214366228 1212587999 1218725806 1218673195 1218583362 ...
     1218688157 1218965525 1218922324 1219136664 1220284172 1220588360 1224221998 1225763398 ...
-    1235465459 1234865860];
+    1235465459 1234865860 1241873924];
 
 exclude=["Oklahoma_4_4" "Indonesia_6_9" "CostaRica_6_1" "Fiji_6_8" "Oregon_6_2" "Fiji_7_8"]; 
 % exclude=[""];
@@ -38,6 +38,8 @@ PREMvs=[3667.80 3667.78 3667.73 3667.64 3667.51]/1e3;
 % Love and Rayleigh phase-velocity maps, 5–40 s, of the western and central USA from USArray data
 RefFreq=1./[5 10 20 40];
 RefVel=[2.93*0.4800 3.19*0.61 3.51*0.96 3.88*0.98]*1e3;
+
+freqSpace=logspace(-2,0,40);
 
 clipPass=zeros(1, length(earthquakes));
 vel=[];
@@ -79,6 +81,7 @@ end
 %% Data pull and decimate
 for j=1:length(earthquakes)
 % for j=1
+
     if and(or(clipPass(j)==1, not(testBool)),sum(earthquakes(j)==exclude)==0)
         earthquakes(j)
         filename=strcat('/home/michael/Google Drive/Seismology/Data/GPS',num2str(timeStamp(j)),'_',earthquakes(j));
@@ -108,7 +111,7 @@ for j=1:length(earthquakes)
 
 
         %% Time cut
-        timeThreshold=3e-6;
+        timeThreshold=0.5e-6;
 
         timeCut=find(abs(inZ-mean(inZ))>timeThreshold);
         startTime=(timeCut(1)-1000);
@@ -154,13 +157,13 @@ for j=1:length(earthquakes)
         tim=tim(500*sampF:end);
 
         %% Coherence
-        [CX, ERCX, ~]=cohExtraction(RX, Z, sampF);
-        [CY, ERCY, F]=cohExtraction(RY, Z, sampF);
+        [CX, ERCX, ~]=cohExtraction(RX, Z, sampF, freqSpace);
+        [CY, ERCY, F]=cohExtraction(RY, Z, sampF, freqSpace);
         
         in=find(or(CX>0.9,CY>0.9));
         %% Spectra
         
-        [AV, EV, F] = velExtraction(Z, X, Y, RX, RY, sampF, in);
+        [AV, EV, F] = velExtraction(Z, X, Y, RX, RY, sampF, in, freqSpace);
 
         %% Phase Velocity Calculations
 
@@ -177,9 +180,11 @@ end
 vAv=[];
 fAv=[];
 aAv=[];
+errAv=[];
 for i=1:length(F)
     if not(isnan(mean(vel(find(vFreq==F(i))))))
         vAv=[vAv; mean(vel(find(vFreq==F(i))))];
+        errAv=[errAv; std(vel(find(vFreq==F(i))))];
         fAv=[fAv; F(i)];
     end
 end
@@ -201,16 +206,17 @@ set(gca,'FontSize',16);
 t=(cputime-t0)/3600
 
 fig1=figure(4);
-plot2=errorbar(vFreq,vel/1e3,vErr/1e3,'.');
+% plot2=errorbar(vFreq,vel/1e3,abs(vErr)/1e3,'.');
 % plot2=errorbar(F(in),AV(in),EV(in),'.');
 hold on
-plot11=plot(fAv,vAv/1e3);
+plot11=plot(vFreq,vel/1e3,'.');
+plot2=errorbar(fAv,vAv/1e3,abs(errAv./sqrt(length(errAv)))/1e3);
 plot10=plot(RefFreq,RefVel/1e3,'.');
 hold off
 ylabel('Velocity (km/s)')
 xlabel('Frequency (Hz)')
 set(gca,'XScale','log');
-% ylim([0 3000])
+ylim([0 5])
 set(plot2,'LineWidth',1.5);
 set(gca,'FontSize',16);
 set(plot2,'MarkerSize',2);

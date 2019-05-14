@@ -1,33 +1,31 @@
-function [C, err, F]=cohExtraction(signal1, signal2, sampf)
+function [C, err, F]=cohExtraction(signal1, signal2, sampf, freqSpace)
 % Extracts coherence between two signals
 %
 % [C, err, F]=cohExtraction(signal1, signal2, sampf)
 
-startFreq=0.01;
-freqStep=.01;
-endFreq=1;
-
-iter=floor((endFreq-startFreq)/freqStep);
+iter=length(freqSpace);
 
 signal1=signal1-mean(signal1);
 signal2=signal2-mean(signal2);
-F=(startFreq:freqStep:endFreq);
 
+F=[];
 C=[];
 err=[];
 
-for a=0:iter
+for a=1:iter-1
     
     %% Data Crunching  
     % Bandpass filtering to get data into frequency bins
-    freq=(startFreq+a*freqStep);
-    [bb,aa]= butter(3,[2*((a-1/2)*freqStep+startFreq)/sampf 2*((a+1/2)*freqStep+startFreq)/sampf],'bandpass');
+    freq=freqSpace(a);
+    freqStep=(freqSpace(a+1)-freqSpace(a))/2;
+    F=[F; freq];
+    
+    [bb,aa]= butter(3,[2*(freq-freqStep)/sampf 2*(freq+freqStep)/sampf],'bandpass');
 
     filtSignal1=filter(bb,aa,signal1);
     filtSignal2=filter(bb,aa,signal2);
 
-    fitLength=floor(2/(freq/sampf));
-    
+    fitLength=floor(2/(freq/sampf));    
         
     temp=zeros(floor(length(filtSignal1)/fitLength)-2,1);
     

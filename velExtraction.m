@@ -1,13 +1,9 @@
-function [V, errV, F]=velExtraction(z, x, y, rx, ry, sampf, inFreq)
+function [V, errV, F]=velExtraction(z, x, y, rx, ry, sampf, inFreq, freqSpace)
 % Extracts velocity from z, rx, and ry
 %
 % [V, errV, F]=velExtraction(z, x, y, rx, ry, sampf, inFreq)
 
-startFreq=0.02;
-freqStep=0.02;
-endFreq=1;
-
-iter=floor((endFreq-startFreq)/freqStep);
+iter=length(freqSpace);
 
 z=z-mean(z);
 x=x-mean(x);
@@ -21,14 +17,15 @@ errV=[];
 deltaXHist=[];
 deltaYHist=[];
 
-for a=0:iter
-    if max(a==inFreq)==1
+for a=1:iter-1
+%     if max(a==inFreq)==1
         %% Data Crunching  
         % Bandpass filtering to get data into frequency bins
-        freq=(startFreq+a*freqStep);
+        freq=freqSpace(a);
+        freqStep=(freqSpace(a+1)-freqSpace(a))/2;
         F=[F; freq];
 
-        [bb,aa]= butter(3,[2*((a-1/2)*freqStep+startFreq)/sampf 2*((a+1/2)*freqStep+startFreq)/sampf],'bandpass');
+        [bb,aa]= butter(3,[2*(freq-freqStep)/sampf 2*(freq+freqStep)/sampf],'bandpass');
 
         filtZ=filter(bb,aa,z);
         filtX=filter(bb,aa,x);
@@ -37,16 +34,16 @@ for a=0:iter
         filtRY=filter(bb,aa,ry);
         
         fitErr=[];
-        shiftMax=sampf/startFreq;
+        shiftMax=ceil(sampf/freq);
         minFitErr=inf;
         minShift=0;
-        for shift=(-shiftMax:shiftMax)
+        for shift=(-shiftMax+1:shiftMax-1)
         
-            hilRX=hilbert(filtRX(100*sampf:end-shiftMax));
-            hilRY=hilbert(filtRY(100*sampf:end-shiftMax));
-            hilX=hilbert(filtX(100*sampf+shift:end-shiftMax+shift));
-            hilY=hilbert(filtY(100*sampf+shift:end-shiftMax+shift));
-            hilZ=hilbert(filtZ(100*sampf:end-shiftMax));       
+            hilRX=hilbert(filtRX(shiftMax:end-shiftMax));
+            hilRY=hilbert(filtRY(shiftMax:end-shiftMax));
+            hilX=hilbert(filtX(shiftMax+shift:end-shiftMax+shift));
+            hilY=hilbert(filtY(shiftMax+shift:end-shiftMax+shift));
+            hilZ=hilbert(filtZ(shiftMax:end-shiftMax));       
 
             cutLevel=0.1*max(abs(hilZ));
 
@@ -66,7 +63,7 @@ for a=0:iter
 
             fitX=[hilRX, hilY]';
             fitY=[hilRY, hilX]';
-
+            
             wX=inv(fitX*fitX')*fitX*hilZ;
             wY=inv(fitY*fitY')*fitY*hilZ; 
             
@@ -77,11 +74,11 @@ for a=0:iter
             end
         end
         
-        hilRX=hilbert(filtRX(100*sampf:end-shiftMax));
-        hilRY=hilbert(filtRY(100*sampf:end-shiftMax));
-        hilX=hilbert(filtX(100*sampf+minShift:end-shiftMax+minShift));
-        hilY=hilbert(filtY(100*sampf+minShift:end-shiftMax+minShift));
-        hilZ=hilbert(filtZ(100*sampf:end-shiftMax));       
+        hilRX=hilbert(filtRX(shiftMax:end-shiftMax));
+        hilRY=hilbert(filtRY(shiftMax:end-shiftMax));
+        hilX=hilbert(filtX(shiftMax+minShift:end-shiftMax+minShift));
+        hilY=hilbert(filtY(shiftMax+minShift:end-shiftMax+minShift));
+        hilZ=hilbert(filtZ(shiftMax:end-shiftMax));       
 
         cutLevel=0.01*max(abs(hilZ));
 
@@ -112,11 +109,11 @@ for a=0:iter
         vx=wX(1);
         vy=wY(1);
         
-        err=sqrt(inv(fitX*fitX')*1e-9);
+        err=sqrt(abs(inv(fitX*fitX')*[1e-9 1e-9]'));
         
-        errV=[errV err];
+        errV=[errV err(1)];
         V=[V sqrt(vx^2+vy^2)];
    
-    end
+%     end
     
 end
