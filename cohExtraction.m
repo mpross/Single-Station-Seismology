@@ -24,23 +24,31 @@ for a=1:iter-1
 
     filtSignal1=filter(bb,aa,signal1);
     filtSignal2=filter(bb,aa,signal2);
-
-    fitLength=floor(2/(freq/sampf));    
-        
-    temp=zeros(floor(length(filtSignal1)/fitLength)-2,1);
     
-    for j=1:floor(length(filtSignal1)/fitLength)-2
+    hilSignal1=abs(hilbert(filtSignal1));
+    hilSignal2=abs(hilbert(filtSignal2));
+    
+    if (15*std(hilSignal1(floor(end/2):end))<max(hilSignal1(1:floor(end/2)))-mean(hilSignal1(1:floor(end/2))))
+       
+        fitLength=floor(20/(freq/sampf));
 
-        cut1=filtSignal1(j*fitLength:(j+1)*fitLength);
-        cut2=filtSignal2(j*fitLength:(j+1)*fitLength);
-  
-        crossCor=sqrt(max(abs(xcorr(cut1,cut2))).^2./(max(abs(xcorr(cut1))).*max(abs(xcorr(cut2)))));
-        
-        temp(j)=crossCor;
+        temp=zeros(floor(length(filtSignal1)/fitLength)-2,1);
 
+        for j=1:floor(length(filtSignal1)/fitLength)-2
+
+            cut1=hilSignal1(j*fitLength:(j+1)*fitLength);
+            cut2=hilSignal2(j*fitLength:(j+1)*fitLength);
+
+            crossCor=max(abs(xcorr(cut1,cut2))).^2./(max(abs(xcorr(cut1))).*max(abs(xcorr(cut2))));
+
+            temp(j)=crossCor;
+
+        end 
+        C=[C mean(temp)];
+        err=[err std(temp)/sqrt(length(temp))];
+    else
+        C=[C 0];
+        err=[err 0];
     end
-        
-    C=[C mean(temp)];
-    err=[err std(temp)/sqrt(length(temp))];
     
 end

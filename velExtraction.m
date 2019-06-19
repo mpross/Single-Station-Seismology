@@ -18,12 +18,11 @@ deltaXHist=[];
 deltaYHist=[];
 
 for a=1:iter-1
-%     if max(a==inFreq)==1
+    if max(freqSpace(a)==inFreq)>=1
         %% Data Crunching  
         % Bandpass filtering to get data into frequency bins
         freq=freqSpace(a);
-        freqStep=(freqSpace(a+1)-freqSpace(a))/2;
-        F=[F; freq];
+        freqStep=(freqSpace(a+1)-freqSpace(a))/2;        
 
         [bb,aa]= butter(3,[2*(freq-freqStep)/sampf 2*(freq+freqStep)/sampf],'bandpass');
 
@@ -37,16 +36,24 @@ for a=1:iter-1
         shiftMax=ceil(sampf/freq);
         minFitErr=inf;
         minShift=0;
+        
         for shift=(-shiftMax+1:shiftMax-1)
         
             hilRX=hilbert(filtRX(shiftMax:end-shiftMax));
             hilRY=hilbert(filtRY(shiftMax:end-shiftMax));
             hilX=hilbert(filtX(shiftMax+shift:end-shiftMax+shift));
             hilY=hilbert(filtY(shiftMax+shift:end-shiftMax+shift));
-            hilZ=hilbert(filtZ(shiftMax:end-shiftMax));       
+            hilZ=hilbert(filtZ(shiftMax:end-shiftMax));  
+            
+            
+            RX=(filtRX(shiftMax:end-shiftMax));
+            RY=(filtRY(shiftMax:end-shiftMax));
+            X=(filtX(shiftMax+minShift:end-shiftMax+minShift));
+            Y=(filtY(shiftMax+minShift:end-shiftMax+minShift));
+            Z=(filtZ(shiftMax:end-shiftMax));  
 
-            cutLevel=0.1*max(abs(hilZ));
-
+            cutLevel=0.01*max(abs(hilZ));
+            
             cutIndex=find(abs(hilZ)>cutLevel);
 
             hilZ=hilZ(cutIndex);
@@ -54,6 +61,13 @@ for a=1:iter-1
             hilY=hilY(cutIndex);
             hilRY=hilRY(cutIndex);
             hilRX=hilRX(cutIndex);
+            
+            
+            Z=Z(cutIndex);
+            X=X(cutIndex);
+            Y=Y(cutIndex);
+            RY=RY(cutIndex);
+            RX=RX(cutIndex);
 
             hilX=detrend(abs(hilX),'constant');
             hilY=detrend(abs(hilY),'constant');
@@ -67,7 +81,7 @@ for a=1:iter-1
             wX=inv(fitX*fitX')*fitX*hilZ;
             wY=inv(fitY*fitY')*fitY*hilZ; 
             
-            fitErr=[fitErr; sum((hilZ-(wX(1).*hilRX+wX(2).*hilX)).^2)];
+            fitErr=[fitErr; sum((hilZ-(wX(1).*RX+wX(2).*hilX)).^2)];
             if sum((hilZ-(wX(1).*hilRX+wX(2).*hilX)).^2) < minFitErr
                 minFitErr=sum((hilZ-(wX(1).*hilRX+wX(2).*hilX)).^2);
                 minShift=shift;
@@ -78,7 +92,13 @@ for a=1:iter-1
         hilRY=hilbert(filtRY(shiftMax:end-shiftMax));
         hilX=hilbert(filtX(shiftMax+minShift:end-shiftMax+minShift));
         hilY=hilbert(filtY(shiftMax+minShift:end-shiftMax+minShift));
-        hilZ=hilbert(filtZ(shiftMax:end-shiftMax));       
+        hilZ=hilbert(filtZ(shiftMax:end-shiftMax));
+        
+        RX=(filtRX(shiftMax:end-shiftMax));
+        RY=(filtRY(shiftMax:end-shiftMax));
+        X=(filtX(shiftMax+minShift:end-shiftMax+minShift));
+        Y=(filtY(shiftMax+minShift:end-shiftMax+minShift));
+        Z=(filtZ(shiftMax:end-shiftMax)); 
 
         cutLevel=0.01*max(abs(hilZ));
 
@@ -89,6 +109,12 @@ for a=1:iter-1
         hilY=hilY(cutIndex);
         hilRY=hilRY(cutIndex);
         hilRX=hilRX(cutIndex);
+        
+        Z=Z(cutIndex);
+        X=X(cutIndex);
+        Y=Y(cutIndex);
+        RY=RY(cutIndex);
+        RX=RX(cutIndex);
 
         hilX=detrend(abs(hilX),'constant');
         hilY=detrend(abs(hilY),'constant');
@@ -109,11 +135,15 @@ for a=1:iter-1
         vx=wX(1);
         vy=wY(1);
         
-        err=sqrt(abs(inv(fitX*fitX')*[1e-9 1e-9]'));
-        
-        errV=[errV err(1)];
+        err=inv(fitX*fitX')*fitX*ones(length(hilRX),1)*1e-9;        
+       
+%         if sum((hilZ'-wX'*fitX).^2)+sum((hilZ'-wY'*fitY).^2) < 10^-6
+            
+        errV=[errV err];
         V=[V sqrt(vx^2+vy^2)];
+        F=[F; freq];
+%         end
    
-%     end
+    end
     
 end
